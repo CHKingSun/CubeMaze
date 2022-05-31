@@ -56,40 +56,39 @@ void AMazeActor::UpdateMaze(bool bResetRandomSeed)
 	// Walls
 	MazeWall->ClearInstances();
 	FTransform Trans;
+	constexpr float ZScale = 1.5f; 
 	for (auto& SpaceData : (*MazeData))
 	{
 		switch (SpaceData.DataType)
 		{
 		case FMazeDataStruct::Space: break;
 		case FMazeDataStruct::Edge:
-			if (SpaceData.State == FMazeDataStruct::NotInitialized)
+			if (SpaceData.MeshIndex == -2)
 			{
 				if (SpaceData.X % 2 == 0)
 				{
 					const auto OffsetX = SpaceData.X / 2 * (SpaceSize.X + WallSize.X);
 					const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.X) + SpaceSize.Y; 
-					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(2.f, 1.f, 1.f));	
+					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(2.f, 1.f, ZScale));	
 				}
 				else
 				{
 					const auto OffsetX = SpaceData.X / 2 * (SpaceSize.X + WallSize.X) + SpaceSize.X;
 					const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.X); 
-					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(1.f, 2.f, 1.f));	
+					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(1.f, 2.f, ZScale));	
 				}
 
 				SpaceData.MeshIndex = MazeWall->AddInstance(Trans);
-				SpaceData.State = FMazeDataStruct::Initialized;
 			}
 			break;
 		case FMazeDataStruct::Junction:
-			if (SpaceData.State == FMazeDataStruct::NotInitialized)
+			if (SpaceData.MeshIndex == -2)
 			{
 				const auto OffsetX = SpaceData.X / 2 * (SpaceSize.X + WallSize.X) + SpaceSize.X;
 				const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.X) + SpaceSize.Y; 
-				Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(1.f, 1.f, 1.f));	
+				Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(1.f, 1.f, ZScale));	
 
 				SpaceData.MeshIndex = MazeWall->AddInstance(Trans);
-				SpaceData.State = FMazeDataStruct::Initialized;
 			}
 			break;
 		default: ;

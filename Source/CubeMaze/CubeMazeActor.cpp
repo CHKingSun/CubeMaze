@@ -87,7 +87,7 @@ void ACubeMazeActor::UpdateCubeMaze(bool bResetRandomSeed)
 
 	//Edge
 	const float MeshSize = 100.f;
-	const float EdgeScale = 1.5f;
+	const float EdgeScale = 2.f;
 	const float EdgeSize = EdgeScale * MeshSize;
 	MazeEdge->ClearInstances();
 	FTransform Trans;

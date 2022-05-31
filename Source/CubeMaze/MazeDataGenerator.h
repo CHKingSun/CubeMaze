@@ -17,22 +17,14 @@ struct FMazeDataStruct
 		Edge,  // 墙
 		Junction, // 连接点
 	};
-	
-	enum PlaceState
-	{
-		NotUsed,  // 不使用，即留空
-		NotInitialized,  // 使用，但是还没有初始化模型
-		Initialized,  // 使用，并且已经初始化模型
-	};
 
 	PlaceType DataType;
-	PlaceState State;
 	int32 X;
 	int32 Y;
-	int32 MeshIndex;
+	int32 MeshIndex;  // -1表示不使用，-2表示需要使用，但是没有初始化，0+表示对应实例的index
 
-	FMazeDataStruct() : DataType(Space), State(NotUsed), X(0), Y(0), MeshIndex(-1) {}
-	FMazeDataStruct(PlaceType DataType, PlaceState State, int32 X, int32 Y, int32 MeshIndex) : DataType(DataType), State(State), X(X), Y(Y), MeshIndex(MeshIndex) {}
+	FMazeDataStruct() : DataType(Space), X(0), Y(0), MeshIndex(-1) {}
+	FMazeDataStruct(PlaceType DataType, int32 X, int32 Y, int32 MeshIndex) : DataType(DataType), X(X), Y(Y), MeshIndex(MeshIndex) {}
 };
 
 
@@ -95,5 +87,10 @@ public:
 	
 	void ResetMaze(int32 Row, int32 Col, int32 RSeed);
 
-	bool Generate(bool bResetRandomSeed = true);
+	void Generate(bool bResetRandomSeed = true);
+	
+protected:
+
+	// FromDir: 从哪个方向过来。如果是DirectionSize，则表示不从任何方向过来，初始化时使用。
+	void PrimRecursive(TSet<int32>& GridSet, int32 CurX, int32 CurY, Direction FromDir=DirectionSize);
 };
