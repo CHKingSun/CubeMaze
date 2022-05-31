@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MazeActor.h"
 #include "GameFramework/Actor.h"
 #include "CubeMazeActor.generated.h"
 
@@ -17,10 +16,7 @@ protected:
 	FRandomStream RandomStream;
 
 	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
-	int32 MazeSize;
-
-	UPROPERTY(Category=Maze, VisibleDefaultsOnly, BlueprintReadOnly)
-	float CenterOffset;
+	FIntVector MazeSize;
 
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UChildActorComponent> MazeBottom;
@@ -49,7 +45,9 @@ protected:
 	UFUNCTION(Category=Maze, BlueprintCallable)
 	void UpdateCubeMaze(bool bResetRandomSeed = true);
 
-	void SetChildSizeAndRandomSeed(const TObjectPtr<UChildActorComponent> Child) const;
+	FVector2D InitializeChildMaze(const TObjectPtr<UChildActorComponent> Child, int32 MRow, int32 MCol) const;
+
+	bool CheckChildActor()const;
 
 public:	
 	// Called every frame

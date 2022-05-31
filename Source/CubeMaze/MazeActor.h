@@ -13,13 +13,15 @@ class CUBEMAZE_API AMazeActor : public AActor
 
 protected:
 	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
-	FRandomStream RandomStream;
+	int32 RandomSeed;
 	
 	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
-	int32 MazeSize = 12;
+	int32 MazeRow = 12;
+	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
+	int32 MazeCol = 12;
 
 	UPROPERTY(Category=Maze, VisibleDefaultsOnly, BlueprintReadOnly)
-	float CenterOffset;
+	FVector2D MazeSpaceSize;
 
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInstancedStaticMeshComponent> MazeFloor;
@@ -31,7 +33,7 @@ protected:
 	// -1: 不需要墙，留空
 	// 0+: 已经创建完成，值为对应墙的实例的index
 	UPROPERTY(Category=Maze, BlueprintReadOnly)
-	TArray<int32> MazeWallIndices;
+	TObjectPtr<class UMazeDataGenerator> MazeData;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -40,16 +42,18 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
-	void GenerateMaze();
 
 	UFUNCTION(Category=Maze, BlueprintCallable)
 	void UpdateMaze(bool bResetRandomSeed = true);
+
+	void CheckMazeData();
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(Category=Maze, BlueprintCallable)
-	void UpdateSizeAndRandomStream(int32 MSize, int32 RamdomSeed);
+	void UpdateSizeAndRandomSeed(int32 MRow, int32 MCol, int32 RSeed);
+
+	const FVector2D& GetMazeSpaceSize()const { return MazeSpaceSize; }
 };

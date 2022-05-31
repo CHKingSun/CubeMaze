@@ -2,6 +2,7 @@
 
 
 #include "CubeMazeActor.h"
+#include "MazeActor.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -14,7 +15,7 @@ ACubeMazeActor::ACubeMazeActor()
 
 	// Default Value
 	RandomStream.Initialize(1024);
-	MazeSize = 12;
+	MazeSize = FIntVector(12);
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 
@@ -48,71 +49,90 @@ void ACubeMazeActor::BeginPlay()
 	
 }
 
+bool ACubeMazeActor::CheckChildActor() const
+{
+	return Cast<AMazeActor>(MazeBottom->GetChildActor()) != nullptr
+		&& Cast<AMazeActor>(MazeTop->GetChildActor()) != nullptr
+		&& Cast<AMazeActor>(MazeFront->GetChildActor()) != nullptr
+		&& Cast<AMazeActor>(MazeBack->GetChildActor()) != nullptr
+		&& Cast<AMazeActor>(MazeLeft->GetChildActor()) != nullptr
+		&& Cast<AMazeActor>(MazeRight->GetChildActor()) != nullptr;
+}
+
 void ACubeMazeActor::UpdateCubeMaze(bool bResetRandomSeed)
 {
+	if (!CheckChildActor()) return;
+	
+	// Initialize Maze Data
 	if (bResetRandomSeed) RandomStream.Reset();
-	constexpr float MeshSize = 100.f;
-	const float SideLength = MazeSize * 2 - 1;
-	CenterOffset = SideLength * MeshSize / 2.f;
 
-	// Maze
-	SetChildSizeAndRandomSeed(MazeBottom);
-	MazeBottom->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -CenterOffset), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 180.f));
-	SetChildSizeAndRandomSeed(MazeTop);
-	MazeTop->SetRelativeLocationAndRotation(FVector(0.f, 0.f, CenterOffset), FRotator::ZeroRotator);
-	SetChildSizeAndRandomSeed(MazeFront);
-	MazeFront->SetRelativeLocationAndRotation(FVector(0.f, CenterOffset, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f));
-	SetChildSizeAndRandomSeed(MazeBack);
-	MazeBack->SetRelativeLocationAndRotation(FVector(0.f, -CenterOffset, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 90.f));
-	SetChildSizeAndRandomSeed(MazeLeft);
-	MazeLeft->SetRelativeLocationAndRotation(FVector(-CenterOffset, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, -90.f));
-	SetChildSizeAndRandomSeed(MazeRight);
-	MazeRight->SetRelativeLocationAndRotation(FVector(CenterOffset, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f));
+	FVector SpaceSize;
+	FVector2D SpaceXY = InitializeChildMaze(MazeBottom, MazeSize.X, MazeSize.Y);
+	SpaceSize.X = SpaceXY.X;
+	SpaceSize.Y = SpaceXY.Y;
+	InitializeChildMaze(MazeTop, MazeSize.X, MazeSize.Y);
+	SpaceXY = InitializeChildMaze(MazeFront, MazeSize.X, MazeSize.Z);
+	SpaceSize.Z = SpaceXY.Y;
+	InitializeChildMaze(MazeBack, MazeSize.X, MazeSize.Z);
+	InitializeChildMaze(MazeLeft, MazeSize.Z, MazeSize.Y);
+	InitializeChildMaze(MazeRight, MazeSize.Z, MazeSize.Y);
+	const auto CenterOffset = SpaceSize / 2.f;
+	
+	MazeBottom->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -CenterOffset.Z), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 180.f));
+	MazeTop->SetRelativeLocationAndRotation(FVector(0.f, 0.f, CenterOffset.Z), FRotator::ZeroRotator);
+	MazeFront->SetRelativeLocationAndRotation(FVector(0.f, CenterOffset.Y, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f));
+	MazeBack->SetRelativeLocationAndRotation(FVector(0.f, -CenterOffset.Y, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 90.f));
+	MazeLeft->SetRelativeLocationAndRotation(FVector(-CenterOffset.X, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, -90.f));
+	MazeRight->SetRelativeLocationAndRotation(FVector(CenterOffset.X, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f));
 
 	//Edge
+	const float MeshSize = 100.f;
 	const float EdgeScale = 1.5f;
 	const float EdgeSize = EdgeScale * MeshSize;
 	MazeEdge->ClearInstances();
 	FTransform Trans;
-
-	Trans.SetScale3D(FVector(SideLength + 2 * EdgeScale, EdgeScale, EdgeScale));  // 2 cantains 2 vertex
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, CenterOffset, CenterOffset));
+	
+	Trans.SetScale3D(FVector(SpaceSize.X / MeshSize + 2 * EdgeScale, EdgeScale, EdgeScale));  // 2 cantains 2 vertex
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, CenterOffset.Y, CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, -CenterOffset - EdgeSize, CenterOffset));
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, -CenterOffset.Y - EdgeSize, CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, -CenterOffset - EdgeSize, -CenterOffset - EdgeSize));
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, -CenterOffset.Y - EdgeSize, -CenterOffset.Z - EdgeSize));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, CenterOffset, -CenterOffset - EdgeSize));
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, CenterOffset.Y, -CenterOffset.Z - EdgeSize));
 	MazeEdge->AddInstance(Trans);
-
-	Trans.SetScale3D(FVector(EdgeScale, SideLength, EdgeScale));
-	Trans.SetTranslation(FVector(CenterOffset, -CenterOffset, CenterOffset));
+	
+	Trans.SetScale3D(FVector(EdgeScale, SpaceSize.Y / MeshSize, EdgeScale));
+	Trans.SetTranslation(FVector(CenterOffset.X, -CenterOffset.Y, CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(CenterOffset, -CenterOffset, -CenterOffset - EdgeSize));
+	Trans.SetTranslation(FVector(CenterOffset.X, -CenterOffset.Y, -CenterOffset.Z - EdgeSize));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, -CenterOffset, -CenterOffset - EdgeSize));
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, -CenterOffset.Y, -CenterOffset.Z - EdgeSize));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, -CenterOffset, CenterOffset));
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, -CenterOffset.Y, CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
-
-	Trans.SetScale3D(FVector(EdgeScale, EdgeScale, SideLength));
-	Trans.SetTranslation(FVector(CenterOffset, CenterOffset, -CenterOffset));
+	
+	Trans.SetScale3D(FVector(EdgeScale, EdgeScale, SpaceSize.Z / MeshSize));
+	Trans.SetTranslation(FVector(CenterOffset.X, CenterOffset.Y, -CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(CenterOffset, -CenterOffset - EdgeSize, -CenterOffset));
+	Trans.SetTranslation(FVector(CenterOffset.X, -CenterOffset.Y - EdgeSize, -CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, -CenterOffset - EdgeSize, -CenterOffset));
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, -CenterOffset.Y - EdgeSize, -CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
-	Trans.SetTranslation(FVector(-CenterOffset - EdgeSize, CenterOffset, -CenterOffset));
+	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, CenterOffset.Y, -CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
 	
 }
 
-void ACubeMazeActor::SetChildSizeAndRandomSeed(const TObjectPtr<UChildActorComponent> Child) const
+FVector2D ACubeMazeActor::InitializeChildMaze(const TObjectPtr<UChildActorComponent> Child, int32 MRow, int32 MCol) const
 {
+	FVector2D SpaceSize;
 	if (const auto MazeActor = Cast<AMazeActor>(Child->GetChildActor()))
 	{
-		MazeActor->UpdateSizeAndRandomStream(MazeSize, RandomStream.GetUnsignedInt());
+		MazeActor->UpdateSizeAndRandomSeed(MRow, MCol, RandomStream.RandHelper(0xffffffff));
+		SpaceSize = MazeActor->GetMazeSpaceSize();
 	}
+	return SpaceSize;
 }
 
 // Called every frame
