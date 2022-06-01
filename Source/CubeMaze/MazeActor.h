@@ -23,9 +23,6 @@ protected:
 	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadWrite)
 	bool bNeedEdge;
 
-	UPROPERTY(Category=Maze, VisibleDefaultsOnly, BlueprintReadOnly)
-	FVector2D MazeSpaceSize;
-
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInstancedStaticMeshComponent> MazeFloor;
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
@@ -39,6 +36,16 @@ protected:
 	// 0+: 已经创建完成，值为对应墙的实例的index
 	UPROPERTY(Category=Maze, BlueprintReadOnly)
 	TObjectPtr<class UMazeDataGenerator> MazeData;
+
+	// 这些是默认尺寸
+	const float MeshSize = 100.f;
+	const float FloorZScale = 0.5f;
+	const FVector SpaceScale = FVector(2, 2, 1.5f);
+	const FVector WallScale = FVector(0.5, 0.5f, 1.5f);
+	const FVector SpaceSize = SpaceScale * MeshSize; 
+	const FVector WallSize = WallScale * MeshSize;
+	const FVector EdgeScale = FVector(1.f, 1.f, WallScale.Z + FloorZScale);
+	const FVector EdgeSize = EdgeScale * MeshSize;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -48,9 +55,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION(Category=Maze, BlueprintCallable)
-	void UpdateMaze(bool bResetRandomSeed = true);
-
 	void CheckMazeData();
 
 public:	
@@ -58,7 +62,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(Category=Maze, BlueprintCallable)
-	void UpdateSizeAndRandomSeed(int32 MCol, int32 MRow, int32 RSeed);
+	void SetSizeAndRandomSeed(int32 MCol, int32 MRow, int32 RSeed);
 
-	const FVector2D& GetMazeSpaceSize()const { return MazeSpaceSize; }
+	UFUNCTION(Category=Maze, BlueprintCallable)
+	void GenerateMaze(bool bResetRandomSeed = true);
+
+	void UpdateMazeEdge(bool bNEdge = true);
+
+	FVector2D GetMazeRawSpaceSize()const;
+	FVector2D GetMazeSpaceSize()const;
 };

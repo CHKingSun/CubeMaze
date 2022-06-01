@@ -38,23 +38,16 @@ void AMazeActor::BeginPlay()
 
 }
 
-void AMazeActor::UpdateMaze(bool bResetRandomSeed)
+void AMazeActor::GenerateMaze(bool bResetRandomSeed)
 {
 	CheckMazeData();
 	MazeData->Generate(bResetRandomSeed);
-	
-	constexpr float MeshSize = 100.f;
-	const FVector SpaceScale(2, 2, 1.5f);
-	const FVector WallScale(0.5, 0.5f, 1.5f);
-	const FVector SpaceSize = SpaceScale * MeshSize; 
-	const FVector WallSize = WallScale * MeshSize; 
 
 	// 这里先不加上边界的尺寸
-	MazeSpaceSize = FVector2D(MazeCol * SpaceSize.X + (MazeCol - 1) * WallSize.X, MazeRow * SpaceSize.Y + (MazeRow - 1) * WallSize.Y);
+	const FVector2D MazeSpaceSize = GetMazeRawSpaceSize();
 	const FVector2D CenterOffset = MazeSpaceSize / 2.f;
 
 	// Floor
-	constexpr float FloorZScale = 0.5f; 
 	MazeFloor->ClearInstances();
 	MazeFloor->AddInstance(FTransform(
 		FRotator::ZeroRotator,
@@ -104,10 +97,18 @@ void AMazeActor::UpdateMaze(bool bResetRandomSeed)
 	}
 
 	// Edge
+	UpdateMazeEdge(bNeedEdge);
+}
+
+void AMazeActor::UpdateMazeEdge(bool bNEdge)
+{
+	bNeedEdge = bNEdge;
 	MazeEdge->ClearInstances();
 	if (!bNeedEdge) return;
-	const FVector EdgeScale(1.f, 1.f, WallScale.Z + FloorZScale);
-	const FVector EdgeSize = EdgeScale * MeshSize;
+
+	FTransform Trans;
+	FVector2D MazeSpaceSize = GetMazeRawSpaceSize();
+	const FVector2D CenterOffset = MazeSpaceSize / 2.f;
 
 	auto UpdateMazeEdge = [&](int32 InEntry, const FVector& InStartLoc, int32 InDir)
 	{
@@ -158,8 +159,19 @@ void AMazeActor::UpdateMaze(bool bResetRandomSeed)
 	MazeEdge->AddInstance(Trans);
 	Trans.SetLocation(FVector(-CenterOffset.X - EdgeSize.X, CenterOffset.Y , 0.f));
 	MazeEdge->AddInstance(Trans);
-	
-	MazeSpaceSize += FVector2D(EdgeSize.X * 2, EdgeSize.Y * 2);
+}
+
+FVector2D AMazeActor::GetMazeRawSpaceSize() const
+{
+	return FVector2D(MazeCol * SpaceSize.X + (MazeCol - 1) * WallSize.X, MazeRow * SpaceSize.Y + (MazeRow - 1) * WallSize.Y);
+}
+
+FVector2D AMazeActor::GetMazeSpaceSize() const
+{
+	FVector2D Ret = GetMazeRawSpaceSize();
+	if (bNeedEdge) Ret += FVector2D(EdgeSize.X * 2, EdgeSize.Y * 2);
+
+	return Ret;
 }
 
 void AMazeActor::CheckMazeData()
@@ -178,13 +190,11 @@ void AMazeActor::Tick(float DeltaTime)
 
 }
 
-void AMazeActor::UpdateSizeAndRandomSeed(int32 MCol, int32 MRow, int32 RSeed)
+void AMazeActor::SetSizeAndRandomSeed(int32 MCol, int32 MRow, int32 RSeed)
 {
 	RandomSeed = RSeed;
 	MazeRow = MRow;
 	MazeCol = MCol;
 	CheckMazeData();
 	MazeData->ResetMaze(MazeRow, MazeCol, RandomSeed);
-
-	UpdateMaze();
 }

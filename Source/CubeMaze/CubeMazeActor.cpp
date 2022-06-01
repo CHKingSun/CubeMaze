@@ -49,33 +49,41 @@ void ACubeMazeActor::BeginPlay()
 	
 }
 
-bool ACubeMazeActor::CheckChildActor() const
+bool ACubeMazeActor::CheckChildActor()
 {
-	return Cast<AMazeActor>(MazeBottom->GetChildActor()) != nullptr
-		&& Cast<AMazeActor>(MazeTop->GetChildActor()) != nullptr
-		&& Cast<AMazeActor>(MazeFront->GetChildActor()) != nullptr
-		&& Cast<AMazeActor>(MazeBack->GetChildActor()) != nullptr
-		&& Cast<AMazeActor>(MazeLeft->GetChildActor()) != nullptr
-		&& Cast<AMazeActor>(MazeRight->GetChildActor()) != nullptr;
+	ActorBottom = Cast<AMazeActor>(MazeBottom->GetChildActor());
+	ActorTop = Cast<AMazeActor>(MazeTop->GetChildActor());
+	ActorFront = Cast<AMazeActor>(MazeFront->GetChildActor());
+	ActorBack = Cast<AMazeActor>(MazeBack->GetChildActor());
+	ActorLeft = Cast<AMazeActor>(MazeLeft->GetChildActor());
+	ActorRight = Cast<AMazeActor>(MazeRight->GetChildActor());
+	return ActorBottom != nullptr && ActorTop != nullptr
+		&& ActorFront != nullptr && ActorBack != nullptr
+		&& ActorLeft != nullptr && ActorRight != nullptr;
 }
 
-void ACubeMazeActor::UpdateCubeMaze(bool bResetRandomSeed)
+void ACubeMazeActor::GenerateCubeMaze(bool bResetRandomSeed)
 {
 	if (!CheckChildActor()) return;
 	
 	// Initialize Maze Data
 	if (bResetRandomSeed) RandomStream.Reset();
 
-	FVector SpaceSize;
-	FVector2D SpaceXY = InitializeChildMaze(MazeBottom, MazeSize.X, MazeSize.Y);
-	SpaceSize.X = SpaceXY.X;
-	SpaceSize.Y = SpaceXY.Y;
-	InitializeChildMaze(MazeTop, MazeSize.X, MazeSize.Y);
-	SpaceXY = InitializeChildMaze(MazeFront, MazeSize.X, MazeSize.Z);
-	SpaceSize.Z = SpaceXY.Y;
-	InitializeChildMaze(MazeBack, MazeSize.X, MazeSize.Z);
-	InitializeChildMaze(MazeLeft, MazeSize.Z, MazeSize.Y);
-	InitializeChildMaze(MazeRight, MazeSize.Z, MazeSize.Y);
+	ActorBottom->SetSizeAndRandomSeed(MazeSize.X, MazeSize.Y, RandomStream.RandHelper(0x7fffffff));
+	ActorTop->SetSizeAndRandomSeed(MazeSize.X, MazeSize.Y, RandomStream.RandHelper(0x7fffffff));
+	ActorFront->SetSizeAndRandomSeed(MazeSize.X, MazeSize.Z, RandomStream.RandHelper(0x7fffffff));
+	ActorBack->SetSizeAndRandomSeed(MazeSize.X, MazeSize.Z, RandomStream.RandHelper(0x7fffffff));
+	ActorLeft->SetSizeAndRandomSeed(MazeSize.Z, MazeSize.Y, RandomStream.RandHelper(0x7fffffff));
+	ActorRight->SetSizeAndRandomSeed(MazeSize.Z, MazeSize.Y, RandomStream.RandHelper(0x7fffffff));
+
+	ActorBottom->GenerateMaze(bResetRandomSeed);
+	ActorTop->GenerateMaze(bResetRandomSeed);
+	ActorFront->GenerateMaze(bResetRandomSeed);
+	ActorBack->GenerateMaze(bResetRandomSeed);
+	ActorLeft->GenerateMaze(bResetRandomSeed);
+	ActorRight->GenerateMaze(bResetRandomSeed);
+
+	const FVector SpaceSize(ActorBottom->GetMazeSpaceSize(), ActorFront->GetMazeSpaceSize().Y);
 	const auto CenterOffset = SpaceSize / 2.f;
 	
 	MazeBottom->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -CenterOffset.Z), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 180.f));
@@ -123,17 +131,6 @@ void ACubeMazeActor::UpdateCubeMaze(bool bResetRandomSeed)
 	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, CenterOffset.Y, -CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
 	
-}
-
-FVector2D ACubeMazeActor::InitializeChildMaze(const TObjectPtr<UChildActorComponent> Child, int32 MRow, int32 MCol) const
-{
-	FVector2D SpaceSize;
-	if (const auto MazeActor = Cast<AMazeActor>(Child->GetChildActor()))
-	{
-		MazeActor->UpdateSizeAndRandomSeed(MRow, MCol, RandomStream.RandHelper(0x7fffffff));  // Helper的数需要>0
-		SpaceSize = MazeActor->GetMazeSpaceSize();
-	}
-	return SpaceSize;
 }
 
 // Called every frame

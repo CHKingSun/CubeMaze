@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "CubeMazeActor.generated.h"
 
+class AMazeActor;
+
 UCLASS()
 class CUBEMAZE_API ACubeMazeActor : public AActor
 {
@@ -33,6 +35,13 @@ protected:
 
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInstancedStaticMeshComponent> MazeEdge;
+
+	TObjectPtr<AMazeActor> ActorBottom;
+	TObjectPtr<AMazeActor> ActorTop;
+	TObjectPtr<AMazeActor> ActorFront;
+	TObjectPtr<AMazeActor> ActorBack;
+	TObjectPtr<AMazeActor> ActorLeft;
+	TObjectPtr<AMazeActor> ActorRight;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -43,11 +52,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(Category=Maze, BlueprintCallable)
-	void UpdateCubeMaze(bool bResetRandomSeed = true);
+	void GenerateCubeMaze(bool bResetRandomSeed = true);
 
-	FVector2D InitializeChildMaze(const TObjectPtr<UChildActorComponent> Child, int32 MRow, int32 MCol) const;
-
-	bool CheckChildActor()const;
+	bool CheckChildActor();
 
 public:	
 	// Called every frame
