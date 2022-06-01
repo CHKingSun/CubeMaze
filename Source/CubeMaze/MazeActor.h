@@ -69,6 +69,8 @@ public:
 
 	void UpdateMazeEdge(bool bNEdge = true);
 
+	const TObjectPtr<UMazeDataGenerator>& GetMazeData()const { return MazeData; }
+
 	FVector2D GetMazeRawSpaceSize()const;
 	FVector2D GetMazeSpaceSize()const;
 };

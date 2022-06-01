@@ -56,6 +56,8 @@ protected:
 
 	bool CheckChildActor();
 
+	void BindMazeAround()const;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

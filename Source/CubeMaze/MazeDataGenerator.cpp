@@ -44,12 +44,63 @@ void UMazeDataGenerator::ResetMaze(int32 Row, int32 Col, int32 RSeed)
 	}
 }
 
+int32 UMazeDataGenerator::GetEdgeEntryByMazeArund(const TObjectPtr<UMazeDataGenerator>& AroundMaze) const
+{
+	if (AroundMaze == nullptr) return -1;
+
+	for (int32 i = 0; i < DirectionSize; ++i)
+	{
+		if (AroundMazes[i] == AroundMaze)
+		{
+			return EdgeEntries[i];
+		}
+	}
+		
+	return -1;
+}
+
 void UMazeDataGenerator::Generate(bool bResetRandomSeed)
 {
 	if (bResetRandomSeed) RandomStream.Reset();
 
 	TSet<int32> GridSet;
-	PrimRecursive(GridSet, MazeRow / 2, MazeCol / 2);
+	PrimRecursive(GridSet, MazeCol / 2, MazeRow / 2);
+}
+
+void UMazeDataGenerator::GenerateEdgeEntry()
+{
+	bool bFlag = true;
+	for (const auto& Entry : EdgeEntries)
+	{
+		bFlag = bFlag && Entry != -1;
+	}
+	if (bFlag) return;
+	
+	for (int i = 0; i < Direction::DirectionSize; ++i)
+	{
+		if (EdgeEntries[i] != -1) continue;
+		
+		int32 Index = AroundMazes[i] == nullptr ? -1 : AroundMazes[i]->GetEdgeEntryByMazeArund(this);
+		if (Index == -1)
+		{
+			if (i == Left || i == Right) Index = (RandomStream.RandHelper(MazeRow) + RandomStream.RandHelper(MazeRow)) / 2;
+			else Index = (RandomStream.RandHelper(MazeCol) + RandomStream.RandHelper(MazeCol)) / 2;
+		}
+		EdgeEntries[i] = Index;
+	}
+
+	for (const auto& Maze : AroundMazes)
+	{
+		if (Maze) Maze->GenerateEdgeEntry();
+	}
+}
+
+void UMazeDataGenerator::ResetEdgeEntry()
+{
+	for (int i = 0; i < Direction::DirectionSize; ++i)
+	{
+		EdgeEntries[i] = -1;
+	}
 }
 
 void UMazeDataGenerator::PrimRecursive(TSet<int32>& GridSet, int32 CurX, int32 CurY, Direction FromDir)

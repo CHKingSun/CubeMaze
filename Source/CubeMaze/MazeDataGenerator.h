@@ -81,7 +81,13 @@ public:
 	
 	void ResetMaze(int32 Row, int32 Col, int32 RSeed);
 
+	int32 GetEdgeEntryByMazeArund(const TObjectPtr<UMazeDataGenerator>& AroundMaze)const;
+	
 	void Generate(bool bResetRandomSeed = true);
+
+	void GenerateEdgeEntry();
+
+	void ResetEdgeEntry();
 	
 protected:
 

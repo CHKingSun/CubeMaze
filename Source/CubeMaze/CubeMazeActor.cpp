@@ -3,6 +3,7 @@
 
 #include "CubeMazeActor.h"
 #include "MazeActor.h"
+#include "MazeDataGenerator.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -62,6 +63,36 @@ bool ACubeMazeActor::CheckChildActor()
 		&& ActorLeft != nullptr && ActorRight != nullptr;
 }
 
+void ACubeMazeActor::BindMazeAround()const
+{
+	auto BindSigle = [](const TObjectPtr<UMazeDataGenerator>& InMaze, const TObjectPtr<UMazeDataGenerator>& L,
+		const TObjectPtr<UMazeDataGenerator>& B, const TObjectPtr<UMazeDataGenerator>& R, const TObjectPtr<UMazeDataGenerator>& T)
+	{
+		if (InMaze == nullptr) return;
+		InMaze->ResetEdgeEntry();
+		InMaze->SetMazeAround(UMazeDataGenerator::Left, L == nullptr? nullptr : L);
+		InMaze->SetMazeAround(UMazeDataGenerator::Bottom, B == nullptr? nullptr : B);
+		InMaze->SetMazeAround(UMazeDataGenerator::Right, R == nullptr? nullptr : R);
+		InMaze->SetMazeAround(UMazeDataGenerator::Top, T == nullptr? nullptr : T);
+	};
+
+	const auto& DataBottom = ActorBottom->GetMazeData();
+	const auto& DataTop = ActorTop->GetMazeData();
+	const auto& DataFront = ActorFront->GetMazeData();
+	const auto& DataBack = ActorBack->GetMazeData();
+	const auto& DataLeft = ActorLeft->GetMazeData();
+	const auto& DataRight = ActorRight->GetMazeData();
+
+	BindSigle(DataTop, DataLeft, DataBack, DataRight, DataFront);
+	BindSigle(DataBottom, DataLeft, DataBack, DataRight, DataFront);
+	BindSigle(DataFront, DataLeft, DataTop, DataRight, DataBottom);
+	BindSigle(DataBack, DataLeft, DataTop, DataRight, DataBottom);
+	BindSigle(DataLeft, DataTop, DataBack, DataBottom, DataFront);
+	BindSigle(DataRight, DataTop, DataBack, DataBottom, DataFront);
+
+	DataFront->GenerateEdgeEntry();
+}
+
 void ACubeMazeActor::GenerateCubeMaze(bool bResetRandomSeed)
 {
 	if (!CheckChildActor()) return;
@@ -76,6 +107,8 @@ void ACubeMazeActor::GenerateCubeMaze(bool bResetRandomSeed)
 	ActorLeft->SetSizeAndRandomSeed(MazeSize.Z, MazeSize.Y, RandomStream.RandHelper(0x7fffffff));
 	ActorRight->SetSizeAndRandomSeed(MazeSize.Z, MazeSize.Y, RandomStream.RandHelper(0x7fffffff));
 
+	BindMazeAround();
+
 	ActorBottom->GenerateMaze(bResetRandomSeed);
 	ActorTop->GenerateMaze(bResetRandomSeed);
 	ActorFront->GenerateMaze(bResetRandomSeed);
@@ -86,12 +119,12 @@ void ACubeMazeActor::GenerateCubeMaze(bool bResetRandomSeed)
 	const FVector SpaceSize(ActorBottom->GetMazeSpaceSize(), ActorFront->GetMazeSpaceSize().Y);
 	const auto CenterOffset = SpaceSize / 2.f;
 	
-	MazeBottom->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -CenterOffset.Z), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 180.f));
-	MazeTop->SetRelativeLocationAndRotation(FVector(0.f, 0.f, CenterOffset.Z), FRotator::ZeroRotator);
-	MazeFront->SetRelativeLocationAndRotation(FVector(0.f, CenterOffset.Y, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f));
-	MazeBack->SetRelativeLocationAndRotation(FVector(0.f, -CenterOffset.Y, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 90.f));
-	MazeLeft->SetRelativeLocationAndRotation(FVector(-CenterOffset.X, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, -90.f));
-	MazeRight->SetRelativeLocationAndRotation(FVector(CenterOffset.X, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f));
+	MazeTop->SetRelativeTransform(FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, CenterOffset.Z), FVector::OneVector));
+	MazeBottom->SetRelativeTransform(FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -CenterOffset.Z), FVector(1.f, 1.f, -1.f)));
+	MazeFront->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f), FVector(0.f, CenterOffset.Y, 0.f), FVector::OneVector));
+	MazeBack->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f), FVector(0.f, -CenterOffset.Y, 0.f), FVector(1.f, 1.f, -1.f)));
+	MazeLeft->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f), FVector(-CenterOffset.X, 0.f, 0.f), FVector(1.f, 1.f, -1.f)));
+	MazeRight->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f), FVector(CenterOffset.X, 0.f, 0.f), FVector::OneVector));
 	
 	//Edge
 	constexpr float MeshSize = 100.f;
