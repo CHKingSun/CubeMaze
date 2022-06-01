@@ -17,7 +17,6 @@ void UMazeDataGenerator::ResetMaze(int32 Row, int32 Col, int32 RSeed)
 	RowSize = MazeRow * 2 -1;
 	ColSize = MazeCol * 2 -1;
 	RandomStream.Initialize(RSeed);
-	
 
 	for (int i = 0; i < Direction::DirectionSize; ++i)
 	{

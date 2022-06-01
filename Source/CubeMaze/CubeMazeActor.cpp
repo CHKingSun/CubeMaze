@@ -129,7 +129,7 @@ FVector2D ACubeMazeActor::InitializeChildMaze(const TObjectPtr<UChildActorCompon
 	FVector2D SpaceSize;
 	if (const auto MazeActor = Cast<AMazeActor>(Child->GetChildActor()))
 	{
-		MazeActor->UpdateSizeAndRandomSeed(MRow, MCol, RandomStream.RandHelper(0xffffffff));
+		MazeActor->UpdateSizeAndRandomSeed(MRow, MCol, RandomStream.RandHelper(0x7fffffff));  // Helper的数需要>0
 		SpaceSize = MazeActor->GetMazeSpaceSize();
 	}
 	return SpaceSize;
