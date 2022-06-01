@@ -84,15 +84,16 @@ void ACubeMazeActor::UpdateCubeMaze(bool bResetRandomSeed)
 	MazeBack->SetRelativeLocationAndRotation(FVector(0.f, -CenterOffset.Y, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, 90.f));
 	MazeLeft->SetRelativeLocationAndRotation(FVector(-CenterOffset.X, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, -90.f));
 	MazeRight->SetRelativeLocationAndRotation(FVector(CenterOffset.X, 0.f, 0.f), UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f));
-
+	
 	//Edge
-	const float MeshSize = 100.f;
-	const float EdgeScale = 2.f;
-	const float EdgeSize = EdgeScale * MeshSize;
+	constexpr float MeshSize = 100.f;
+	constexpr float EdgeScale = 2.f;
+	constexpr float EdgeSize = EdgeScale * MeshSize;
 	MazeEdge->ClearInstances();
 	FTransform Trans;
-	
-	Trans.SetScale3D(FVector(SpaceSize.X / MeshSize + 2 * EdgeScale, EdgeScale, EdgeScale));  // 2 cantains 2 vertex
+
+	// 这里面包括了8个角落
+	Trans.SetScale3D(FVector(SpaceSize.X / MeshSize + 2 * EdgeScale, EdgeScale, EdgeScale));
 	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, CenterOffset.Y, CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
 	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, -CenterOffset.Y - EdgeSize, CenterOffset.Z));

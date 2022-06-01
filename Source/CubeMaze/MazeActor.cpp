@@ -38,44 +38,46 @@ void AMazeActor::UpdateMaze(bool bResetRandomSeed)
 {
 	CheckMazeData();
 	MazeData->Generate(bResetRandomSeed);
+	
+	constexpr float MeshSize = 100.f;
+	const FVector SpaceScale(2, 2, 1.5f);
+	const FVector WallScale(0.5, 0.5f, 1.5f);
+	const FVector SpaceSize = SpaceScale * MeshSize; 
+	const FVector WallSize = WallScale * MeshSize; 
 
-	const FVector2D SpaceSize(200, 200);
-	const FVector2D WallSize(100, 200);
-	const FVector2D MeshSize(100, 100);
-
-	MazeSpaceSize = FVector2D(MazeRow * SpaceSize.X + (MazeRow - 1) * WallSize.X, MazeCol * SpaceSize.X + (MazeCol - 1) * WallSize.X);
+	MazeSpaceSize = FVector2D(MazeCol * SpaceSize.X + (MazeCol - 1) * WallSize.X, MazeRow * SpaceSize.Y + (MazeRow - 1) * WallSize.Y);
 
 	// Floor
+	constexpr float FloorZScale = 0.5f; 
 	MazeFloor->ClearInstances();
 	MazeFloor->AddInstance(FTransform(
 		FRotator::ZeroRotator,
 		FVector(-MazeSpaceSize.X / 2.f, -MazeSpaceSize.Y / 2.f, 0),
-		FVector(MazeSpaceSize.X / MeshSize.X, MazeSpaceSize.Y / MeshSize.Y, 0.5f)
+		FVector(MazeSpaceSize.X / MeshSize, MazeSpaceSize.Y / MeshSize, FloorZScale)
 	));
 
 	// Walls
 	MazeWall->ClearInstances();
 	FTransform Trans;
-	constexpr float ZScale = 1.5f; 
 	for (auto& SpaceData : (*MazeData))
 	{
 		switch (SpaceData.DataType)
 		{
 		case FMazeDataStruct::Space: break;
-		case FMazeDataStruct::Edge:
+		case FMazeDataStruct::Wall:
 			if (SpaceData.MeshIndex == -2)
 			{
 				if (SpaceData.X % 2 == 0)
 				{
 					const auto OffsetX = SpaceData.X / 2 * (SpaceSize.X + WallSize.X);
-					const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.X) + SpaceSize.Y; 
-					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(2.f, 1.f, ZScale));	
+					const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.Y) + SpaceSize.Y; 
+					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize * 0.5f), FVector(SpaceScale.X, WallScale.Y, WallScale.Z));	
 				}
 				else
 				{
 					const auto OffsetX = SpaceData.X / 2 * (SpaceSize.X + WallSize.X) + SpaceSize.X;
-					const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.X); 
-					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(1.f, 2.f, ZScale));	
+					const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.Y); 
+					Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize * 0.5f), FVector(WallScale.X, SpaceScale.Y, WallScale.Z));	
 				}
 
 				SpaceData.MeshIndex = MazeWall->AddInstance(Trans);
@@ -85,8 +87,8 @@ void AMazeActor::UpdateMaze(bool bResetRandomSeed)
 			if (SpaceData.MeshIndex == -2)
 			{
 				const auto OffsetX = SpaceData.X / 2 * (SpaceSize.X + WallSize.X) + SpaceSize.X;
-				const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.X) + SpaceSize.Y; 
-				Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize.X * 0.5f) ,FVector(1.f, 1.f, ZScale));	
+				const auto OffsetY = SpaceData.Y / 2 * (SpaceSize.Y + WallSize.Y) + SpaceSize.Y; 
+				Trans.SetTranslationAndScale3D(FVector(-MazeSpaceSize.X / 2.f + OffsetX, -MazeSpaceSize.Y / 2.f + OffsetY, MeshSize * 0.5f), WallScale);	
 
 				SpaceData.MeshIndex = MazeWall->AddInstance(Trans);
 			}
@@ -112,7 +114,7 @@ void AMazeActor::Tick(float DeltaTime)
 
 }
 
-void AMazeActor::UpdateSizeAndRandomSeed(int32 MRow, int32 MCol, int32 RSeed)
+void AMazeActor::UpdateSizeAndRandomSeed(int32 MCol, int32 MRow, int32 RSeed)
 {
 	RandomSeed = RSeed;
 	MazeRow = MRow;

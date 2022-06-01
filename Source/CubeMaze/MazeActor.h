@@ -16,9 +16,9 @@ protected:
 	int32 RandomSeed;
 	
 	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
-	int32 MazeRow = 12;
-	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
 	int32 MazeCol = 12;
+	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
+	int32 MazeRow = 12;
 
 	UPROPERTY(Category=Maze, VisibleDefaultsOnly, BlueprintReadOnly)
 	FVector2D MazeSpaceSize;
@@ -53,7 +53,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(Category=Maze, BlueprintCallable)
-	void UpdateSizeAndRandomSeed(int32 MRow, int32 MCol, int32 RSeed);
+	void UpdateSizeAndRandomSeed(int32 MCol, int32 MRow, int32 RSeed);
 
 	const FVector2D& GetMazeSpaceSize()const { return MazeSpaceSize; }
 };

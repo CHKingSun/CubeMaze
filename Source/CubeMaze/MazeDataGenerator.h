@@ -14,7 +14,7 @@ struct FMazeDataStruct
 	enum PlaceType
 	{
 		Space,  // 空地
-		Edge,  // 墙
+		Wall,  // 墙
 		Junction, // 连接点
 	};
 
@@ -65,12 +65,6 @@ protected:
 
 public:
 	UMazeDataGenerator();
-
-	// const FMazeDataStruct& operator[](int32 index)const { return MazeData[index]; }  // check交给TArray做
-	// FMazeDataStruct& operator[](int32 index) { return MazeData[index]; }  // check交给TArray做
-	//
-	// const FMazeDataStruct& operator()(int32 x, int32 y)const { return MazeData[x + y * RowSize]; }  // check交给TArray做
-	// FMazeDataStruct& operator()(int32 x, int32 y) { return MazeData[x + y * RowSize]; }  // check交给TArray做
 
 	TArray<FMazeDataStruct>::RangedForIteratorType begin() { return MazeData.begin(); }
 	TArray<FMazeDataStruct>::RangedForConstIteratorType begin()const { return MazeData.begin(); }
