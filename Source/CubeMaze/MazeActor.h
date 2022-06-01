@@ -20,6 +20,9 @@ protected:
 	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
 	int32 MazeRow = 12;
 
+	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadWrite)
+	bool bNeedEdge;
+
 	UPROPERTY(Category=Maze, VisibleDefaultsOnly, BlueprintReadOnly)
 	FVector2D MazeSpaceSize;
 
@@ -27,6 +30,8 @@ protected:
 	TObjectPtr<UInstancedStaticMeshComponent> MazeFloor;
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInstancedStaticMeshComponent> MazeWall;
+	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UInstancedStaticMeshComponent> MazeEdge;
 
 	// 保存每块墙的实例的index
 	// -2: 需要创建墙，但是还没创建
