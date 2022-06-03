@@ -65,6 +65,7 @@ protected:
 
 public:
 	UMazeDataGenerator();
+	virtual void FinishDestroy() override;
 
 	TArray<FMazeDataStruct>::RangedForIteratorType begin() { return MazeData.begin(); }
 	TArray<FMazeDataStruct>::RangedForConstIteratorType begin()const { return MazeData.begin(); }

@@ -7,7 +7,14 @@
 
 UMazeDataGenerator::UMazeDataGenerator()
 {
-	ResetMaze(12, 12, 1024);	
+	ResetMaze(12, 12, 1024);
+	UE_LOG(LogTemp,Warning,TEXT("MazeData Initialize 0X%p!!!!"), this);
+}
+
+void UMazeDataGenerator::FinishDestroy()
+{
+	UObject::FinishDestroy();
+	UE_LOG(LogTemp,Warning,TEXT("MazeData Destroy 0X%p!!!!"), this);
 }
 
 void UMazeDataGenerator::ResetMaze(int32 Row, int32 Col, int32 RSeed)

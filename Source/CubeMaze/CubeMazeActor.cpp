@@ -164,6 +164,7 @@ void ACubeMazeActor::GenerateCubeMaze(bool bResetRandomSeed)
 	Trans.SetTranslation(FVector(-CenterOffset.X - EdgeSize, CenterOffset.Y, -CenterOffset.Z));
 	MazeEdge->AddInstance(Trans);
 	
+	UE_LOG(LogTemp,Warning,TEXT("Generate Cube Maze End!!!!"), this);
 }
 
 // Called every frame

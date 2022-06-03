@@ -30,6 +30,15 @@ protected:
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInstancedStaticMeshComponent> MazeEdge;
 
+	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UBoxComponent> EntryLeft;
+	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UBoxComponent> EntryRight;
+	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UBoxComponent> EntryTop;
+	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UBoxComponent> EntryBottom;
+
 	// 保存每块墙的实例的index
 	// -2: 需要创建墙，但是还没创建
 	// -1: 不需要墙，留空
@@ -51,12 +60,19 @@ public:
 	// Sets default values for this actor's properties
 	AMazeActor();
 
+	virtual void FinishDestroy() override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void CheckMazeData();
 
+	void InitializeEntryBox(const TObjectPtr<UBoxComponent>& EntryBox)const;
+
+	UFUNCTION()
+	void OnEntryBoxBeginOvelap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
