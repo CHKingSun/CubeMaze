@@ -318,51 +318,44 @@ bool AMazeActor::SetChildsActorClass()
 
 void AMazeActor::OnEntryBeginOvelap(APortalActor* OverlappedActor, AActor* OtherActor)
 {
-	const FVector LeftRotAxis(0.f, 1.f, 0.f);
-	const FVector RightRotAxis(0.f, -1.f, 0.f);
-	const FVector BottomRotAxis(-1.f, 0.f, 0.f);
-	const FVector TopRotAxis(1.f, 0.f, 0.f);
+	const auto Entry = Cast<AEntryPortalActor>(OverlappedActor);
+	if (Entry == nullptr) return;
 
-	float Duration = 10;
-	
-	FVector RotAxis;
-	// if (OverlappedComponent == EntryLeft)
+	const auto Dir = Entry->GetEntryDirection();
+	const auto& AroundMaze = AroundMazes[Dir];
+	if (AroundMaze == nullptr) return;
+
+	FVector UpVector = FVector::UpVector;
+	const FVector Scale = AroundMaze->GetActorScale3D();  // 镜像的是ChildActorComponent
+	UpVector *= FVector(FMath::Sign(Scale.X), FMath::Sign(Scale.Y), FMath::Sign(Scale.Z));  // 处理镜像问题
+	UpVector = AroundMaze->GetActorQuat().RotateVector(UpVector);  // 找到要旋转的Maze的Z轴
+
+	// FString Str("Entry: ");
+	// switch (Dir)
 	// {
-	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Left!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Left) == nullptr) return;
-	// 	RotAxis = LeftRotAxis;
-	// } else if (OverlappedComponent == EntryRight)
-	// {
-	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Right!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Right) == nullptr) return;
-	// 	RotAxis = RightRotAxis;
-	// } else if (OverlappedComponent == EntryBottom)
-	// {
-	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Bottom!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Bottom) == nullptr) return;
-	// 	RotAxis = BottomRotAxis;
-	// } else if (OverlappedComponent == EntryTop)
-	// {
-	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Top!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Top) == nullptr) return;
-	// 	RotAxis = TopRotAxis;
+	// case EMazeDirection::Left: Str += "Left"; break;
+	// case EMazeDirection::Bottom: Str += "Bottom"; break;
+	// case EMazeDirection::Right: Str += "Right"; break;
+	// case EMazeDirection::Top: Str += "Top"; break;
+	// case EMazeDirection::DirectionSize: break;
+	// default: ;
 	// }
+	// Str += ", Forward: " + UpVector.ToString();
+	// UKismetSystemLibrary::PrintString(GetWorld(), Str, true, true, FLinearColor(0, 0.66, 1), 2);
 
-	const FQuat ActorQuat = GetActorQuat();
-	RotAxis = ActorQuat.RotateVector(RotAxis);
-	RotAxis.Normalize();
-	UKismetSystemLibrary::PrintString(GetWorld(), RotAxis.ToString(), true, true, FLinearColor(0, 0.66, 1), 10);
-	const FQuat Rot(RotAxis, FMath::DegreesToRadians(90));
-	// UKismetSystemLibrary::PrintString(GetWorld(), Rot.GetAxisZ().ToString(), true, true, FLinearColor(0, 0.66, 1), Duration);
-
+	
 	if (const auto ParentActor = GetParentActor())
 	{
 		if (auto Character = Cast<AMazeCharacter>(OtherActor))
 		{
-			// Character->SetActorEnableCollision(false);  // 防止移动时产生碰撞
-			// Character->SetActorLocation(FVector(0.f, 0.f, 1000.f));
-			// ParentActor->AddActorLocalRotation(Rot);
-			// Character->SetActorEnableCollision(true);
+			FVector Axis = UpVector ^ FVector::UpVector;  // 求出轴向
+			Axis.Normalize();
+			const FQuat Rot = FQuat(Axis, FMath::DegreesToRadians(90));
+			// Character->AddActorLocalOffset(FVector(0.f, 0.f, 1000.f));  // 防止移动时产生碰撞
+			ParentActor->AddActorWorldRotation(Rot);
+			Character->SetActorLocation(FVector(0.f, 0.f, 1000.f));
+
+			UKismetSystemLibrary::PrintString(GetWorld(), AroundMaze->GetActorTransform().GetScaledAxis(EAxis::Z).ToString(), true, true, FLinearColor(0, 0.66, 1), 2);
 		}
 	}
 }
