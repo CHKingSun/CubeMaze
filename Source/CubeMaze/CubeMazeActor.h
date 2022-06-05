@@ -36,6 +36,9 @@ protected:
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInstancedStaticMeshComponent> MazeEdge;
 
+	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<AMazeActor> MazeClass;
+
 	TObjectPtr<AMazeActor> ActorBottom;
 	TObjectPtr<AMazeActor> ActorTop;
 	TObjectPtr<AMazeActor> ActorFront;
@@ -54,7 +57,11 @@ protected:
 	UFUNCTION(Category=Maze, BlueprintCallable)
 	void GenerateCubeMaze(bool bResetRandomSeed = true);
 
+	UFUNCTION(Category=Maze, BlueprintCallable)
 	bool CheckChildActor();
+
+	UFUNCTION(Category=Maze, BlueprintCallable)
+	bool SetChildsActorClass();
 
 	void BindMazeAround()const;
 

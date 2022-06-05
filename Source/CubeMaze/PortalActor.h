@@ -41,5 +41,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	UFUNCTION(Category=Portal, BlueprintCallable, BlueprintPure=false)
+	void DrawPortalConnectLine(FColor Color = FColor(169, 7, 228))const;
+
+	UFUNCTION(Category=Portal, BlueprintCallable)
+	static void SetBindPortal(APortalActor* Portal1, APortalActor* Portal2);
 
 };

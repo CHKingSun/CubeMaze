@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MazeDataGenerator.h"
 #include "GameFramework/Actor.h"
 #include "MazeActor.generated.h"
 
@@ -11,6 +12,10 @@ class CUBEMAZE_API AMazeActor : public AActor
 {
 	GENERATED_BODY()
 
+public:
+	
+	static bool CheckDirection(EMazeDirection::Direction Dir) { return Dir < EMazeDirection::DirectionSize; }
+	
 protected:
 	UPROPERTY(Category=Maze, EditAnywhere, BlueprintReadOnly)
 	int32 RandomSeed;
@@ -44,9 +49,13 @@ protected:
 	// -1: 不需要墙，留空
 	// 0+: 已经创建完成，值为对应墙的实例的index
 	UPROPERTY(Category=Maze, BlueprintReadOnly)
-	TObjectPtr<class UMazeDataGenerator> MazeData;
+	TObjectPtr<UMazeDataGenerator> MazeData;
 
-	TObjectPtr<class APortalActor> EntryActors[4];
+	UPROPERTY(Category=Portal, BlueprintReadOnly, EditDefaultsOnly)
+	TSubclassOf<class AEntryPortalActor> EntryClass;
+
+	TObjectPtr<AEntryPortalActor> EntryActors[EMazeDirection::DirectionSize];
+	TObjectPtr<AMazeActor> AroundMazes[EMazeDirection::DirectionSize];
 
 	// 这些是默认尺寸
 	const float MeshSize = 100.f;
@@ -71,10 +80,14 @@ protected:
 	UFUNCTION(Category=Maze, BlueprintCallable)
 	void CheckMazeData();
 
+	UFUNCTION(Category=Maze, BlueprintCallable)
 	bool CheckChildActor();
 
+	UFUNCTION(Category=Maze, BlueprintCallable)
+	bool SetChildsActorClass();
+
 	UFUNCTION()
-	void OnEntryBeginOvelap(APortalActor* OverlappedActor, AActor* OtherActor);
+	void OnEntryBeginOvelap(class APortalActor* OverlappedActor, AActor* OtherActor);
 	
 public:	
 	// Called every frame
@@ -88,7 +101,15 @@ public:
 
 	void UpdateMazeEdge(bool bNEdge = true);
 
-	const TObjectPtr<UMazeDataGenerator>& GetMazeData()const { return MazeData; }
+	void SetMazeAround(EMazeDirection::Direction Dir, const TObjectPtr<AMazeActor>& Maze) { if (CheckDirection(Dir)) { AroundMazes[Dir] = Maze; } }
+
+	void ResetEdgeEntry();
+	
+	void BindEntries();
+
+	void GenerateEntry(bool bRecursive = false);
+
+	TObjectPtr<AEntryPortalActor> GetEntryToMazeAround(const TObjectPtr<AMazeActor>& Maze)const;
 
 	FVector2D GetMazeRawSpaceSize()const;
 	FVector2D GetMazeSpaceSize()const;

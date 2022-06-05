@@ -28,7 +28,6 @@ void UMazeDataGenerator::ResetMaze(int32 Row, int32 Col, int32 RSeed)
 	for (int i = 0; i < EMazeDirection::DirectionSize; ++i)
 	{
 		EdgeEntries[i] = -1;
-		AroundMazes[i] = nullptr;
 	}
 
 	// 设置对应的墙和连接点
@@ -57,10 +56,10 @@ int32 UMazeDataGenerator::GetEdgeEntryByMazeArund(const TObjectPtr<UMazeDataGene
 
 	for (int32 i = 0; i < EMazeDirection::DirectionSize; ++i)
 	{
-		if (AroundMazes[i] == AroundMaze)
-		{
+		// if (AroundMazes[i] == AroundMaze)
+		// {
 			return EdgeEntries[i];
-		}
+		// }
 	}
 		
 	return -1;
@@ -74,32 +73,15 @@ void UMazeDataGenerator::Generate(bool bResetRandomSeed)
 	PrimRecursive(GridSet, MazeCol / 2, MazeRow / 2);
 }
 
-void UMazeDataGenerator::GenerateEdgeEntry()
+int32 UMazeDataGenerator::GenerateEdgeEntry(EMazeDirection::Direction Dir)
 {
-	bool bFlag = true;
-	for (const auto& Entry : EdgeEntries)
-	{
-		bFlag = bFlag && Entry != -1;
-	}
-	if (bFlag) return;
-	
-	for (int i = 0; i < EMazeDirection::DirectionSize; ++i)
-	{
-		if (EdgeEntries[i] != -1) continue;
-		
-		int32 Index = AroundMazes[i] == nullptr ? -1 : AroundMazes[i]->GetEdgeEntryByMazeArund(this);
-		if (Index == -1)
-		{
-			if (i == EMazeDirection::Left || i == EMazeDirection::Right) Index = (RandomStream.RandHelper(MazeRow) + RandomStream.RandHelper(MazeRow)) / 2;
-			else Index = (RandomStream.RandHelper(MazeCol) + RandomStream.RandHelper(MazeCol)) / 2;
-		}
-		EdgeEntries[i] = Index;
-	}
+	if (!EMazeDirection::CheckDirection(Dir)) return -1;
+	int32 Index = -1;
+	if (Dir == EMazeDirection::Left || Dir == EMazeDirection::Right) Index = (RandomStream.RandHelper(MazeRow) + RandomStream.RandHelper(MazeRow)) / 2;
+	else Index = (RandomStream.RandHelper(MazeCol) + RandomStream.RandHelper(MazeCol)) / 2;
 
-	for (const auto& Maze : AroundMazes)
-	{
-		if (Maze) Maze->GenerateEdgeEntry();
-	}
+	EdgeEntries[Dir] = Index;
+	return Index;
 }
 
 void UMazeDataGenerator::ResetEdgeEntry()

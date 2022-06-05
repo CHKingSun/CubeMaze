@@ -29,6 +29,14 @@ namespace EMazeDirection
 		Top = 3 UMETA(DisplayName = "Top"),
 		DirectionSize UMETA(DisplayName = "DirectionSize"),
 	};
+
+}
+
+namespace EMazeDirection
+{
+	static constexpr Direction Directions[DirectionSize] = { Left, Bottom, Right, Top, };
+	
+	inline bool CheckDirection(Direction Dir) { return Dir < DirectionSize; }
 }
 
 
@@ -59,10 +67,6 @@ class CUBEMAZE_API UMazeDataGenerator : public UObject
 {
 	GENERATED_BODY()
 
-public:
-	
-	static bool CheckDirection(EMazeDirection::Direction Dir) { return Dir < EMazeDirection::DirectionSize; }
-
 protected:
 	FRandomStream RandomStream;
 	
@@ -76,7 +80,6 @@ protected:
 
 	// l, b, r, t
 	int32 EdgeEntries[EMazeDirection::DirectionSize];
-	TObjectPtr<UMazeDataGenerator> AroundMazes[EMazeDirection::DirectionSize];
 
 public:
 	UMazeDataGenerator();
@@ -86,14 +89,10 @@ public:
 	TArray<FMazeDataStruct>::RangedForConstIteratorType begin()const { return MazeData.begin(); }
 	TArray<FMazeDataStruct>::RangedForIteratorType end() { return MazeData.end(); }
 	TArray<FMazeDataStruct>::RangedForConstIteratorType end()const { return MazeData.end(); }
-	
-	TObjectPtr<UMazeDataGenerator> GetMazeAround(EMazeDirection::Direction Dir)const { return CheckDirection(Dir) ? AroundMazes[Dir] : nullptr; }
 
 	int32 GetEdgeEntry(EMazeDirection::Direction Dir)const { return CheckDirection(Dir) ? EdgeEntries[Dir] : -1; }
 
 	void SetEdgeEntry(EMazeDirection::Direction Dir, int32 EntryIndex) { if (CheckDirection(Dir)) { EdgeEntries[Dir] = EntryIndex; } }
-	
-	void SetMazeAround(EMazeDirection::Direction Dir, const TObjectPtr<UMazeDataGenerator>& AroundMaze) { if (CheckDirection(Dir)) { AroundMazes[Dir] = AroundMaze; } }
 	
 	void ResetMaze(int32 Row, int32 Col, int32 RSeed);
 
@@ -101,7 +100,7 @@ public:
 	
 	void Generate(bool bResetRandomSeed = true);
 
-	void GenerateEdgeEntry();
+	int32 GenerateEdgeEntry(EMazeDirection::Direction Dir);
 
 	void ResetEdgeEntry();
 	

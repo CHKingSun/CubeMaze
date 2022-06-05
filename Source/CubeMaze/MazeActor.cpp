@@ -5,8 +5,7 @@
 
 #include "MazeCharacter.h"
 #include "MazeDataGenerator.h"
-#include "PortalActor.h"
-#include "Components/BoxComponent.h"
+#include "EntryPortalActor.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -199,6 +198,59 @@ void AMazeActor::UpdateMazeEdge(bool bNEdge)
 	MazeEdge->AddInstance(Trans);
 }
 
+void AMazeActor::ResetEdgeEntry()
+{
+	// CheckChildActor();
+	MazeData->ResetEdgeEntry();
+	for (const auto& Entry : EntryActors) Entry->SetEntryPosition(MazeData->GetEdgeEntry(Entry->GetEntryDirection()));
+}
+
+void AMazeActor::BindEntries()
+{
+	for (const auto& Dir : EMazeDirection::Directions)
+	{
+		auto Portal = AroundMazes[Dir] ? AroundMazes[Dir]->GetEntryToMazeAround(this) : nullptr;
+		APortalActor::SetBindPortal(EntryActors[Dir], Portal);
+	}
+}
+
+void AMazeActor::GenerateEntry(bool bRecursive)
+{
+	bool bNeedUpdate = false;
+	for (const auto& Dir : EMazeDirection::Directions)
+	{
+		if (MazeData->GetEdgeEntry(Dir) != -1) continue;
+		bNeedUpdate = true;
+		
+		int32 Index = EntryActors[Dir]->GetBindPortalEntry();
+		if (Index == -1)
+		{
+			Index = MazeData->GenerateEdgeEntry(Dir);
+		}
+		else
+		{
+			MazeData->SetEdgeEntry(Dir, Index);
+		}
+		EntryActors[Dir]->SetEntryPosition(Index);
+	}
+	if (!bNeedUpdate || !bRecursive) return;
+
+	for (const auto& Maze : AroundMazes)
+	{
+		if (Maze) Maze->GenerateEntry(bRecursive);
+	}
+}
+
+TObjectPtr<AEntryPortalActor> AMazeActor::GetEntryToMazeAround(const TObjectPtr<AMazeActor>& Maze)const
+{
+	if (Maze == nullptr) return nullptr;
+	for (const auto& Dir : EMazeDirection::Directions)
+	{
+		if (Maze == AroundMazes[Dir]) return EntryActors[Dir];
+	}
+	return nullptr;
+}
+
 FVector2D AMazeActor::GetMazeRawSpaceSize() const
 {
 	return FVector2D(MazeCol * SpaceSize.X + (MazeCol - 1) * WallSize.X, MazeRow * SpaceSize.Y + (MazeRow - 1) * WallSize.Y);
@@ -224,16 +276,44 @@ void AMazeActor::CheckMazeData()
 
 bool AMazeActor::CheckChildActor()
 {
-	EntryActors[EMazeDirection::Left] = Cast<APortalActor>(EntryLeft->GetChildActor());
-	EntryActors[EMazeDirection::Bottom] = Cast<APortalActor>(EntryBottom->GetChildActor());
-	EntryActors[EMazeDirection::Right] = Cast<APortalActor>(EntryRight->GetChildActor());
-	EntryActors[EMazeDirection::Top] = Cast<APortalActor>(EntryTop->GetChildActor());
+	EntryActors[EMazeDirection::Left] = Cast<AEntryPortalActor>(EntryLeft->GetChildActor());
+	EntryActors[EMazeDirection::Bottom] = Cast<AEntryPortalActor>(EntryBottom->GetChildActor());
+	EntryActors[EMazeDirection::Right] = Cast<AEntryPortalActor>(EntryRight->GetChildActor());
+	EntryActors[EMazeDirection::Top] = Cast<AEntryPortalActor>(EntryTop->GetChildActor());
 
-	for (const auto& Entry : EntryActors)
+	bool bRet = true;
+	for (const auto& Dir : EMazeDirection::Directions)
 	{
-		if (Entry == nullptr) return false;
+		const auto& Entry = EntryActors[Dir];
+		if (Entry == nullptr)
+		{
+			bRet = false;
+		}
+		else
+		{
+			Entry->SetEntryDirection(Dir);
+		}
 	}
-	return true;
+	return bRet;
+}
+
+bool AMazeActor::SetChildsActorClass()
+{
+	EntryLeft->SetChildActorClass(EntryClass);
+	EntryRight->SetChildActorClass(EntryClass);
+	EntryBottom->SetChildActorClass(EntryClass);
+	EntryTop->SetChildActorClass(EntryClass);
+
+	if (CheckChildActor())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeActor Set Childs Success!"));
+		return true;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeActor Set Childs failed!"));
+		return false;
+	}
 }
 
 void AMazeActor::OnEntryBeginOvelap(APortalActor* OverlappedActor, AActor* OtherActor)

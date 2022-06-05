@@ -63,34 +63,55 @@ bool ACubeMazeActor::CheckChildActor()
 		&& ActorLeft != nullptr && ActorRight != nullptr;
 }
 
+bool ACubeMazeActor::SetChildsActorClass()
+{
+	MazeBottom->SetChildActorClass(MazeClass);
+	MazeTop->SetChildActorClass(MazeClass);
+	MazeFront->SetChildActorClass(MazeClass);
+	MazeBack->SetChildActorClass(MazeClass);
+	MazeLeft->SetChildActorClass(MazeClass);
+	MazeRight->SetChildActorClass(MazeClass);
+
+	if (CheckChildActor())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CubeMazeActor Set Childs Success!"));
+		return true;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CubeMazeActor Set Childs failed!"));
+		return false;
+	}
+}
+
 void ACubeMazeActor::BindMazeAround()const
 {
-	auto BindSigle = [](const TObjectPtr<UMazeDataGenerator>& InMaze, const TObjectPtr<UMazeDataGenerator>& L,
-		const TObjectPtr<UMazeDataGenerator>& B, const TObjectPtr<UMazeDataGenerator>& R, const TObjectPtr<UMazeDataGenerator>& T)
+	auto BindSigle = [](const TObjectPtr<AMazeActor>& InMaze, const TObjectPtr<AMazeActor>& L,
+		const TObjectPtr<AMazeActor>& B, const TObjectPtr<AMazeActor>& R, const TObjectPtr<AMazeActor>& T)
 	{
 		if (InMaze == nullptr) return;
 		InMaze->ResetEdgeEntry();
-		InMaze->SetMazeAround(EMazeDirection::Left, L == nullptr? nullptr : L);
-		InMaze->SetMazeAround(EMazeDirection::Bottom, B == nullptr? nullptr : B);
-		InMaze->SetMazeAround(EMazeDirection::Right, R == nullptr? nullptr : R);
-		InMaze->SetMazeAround(EMazeDirection::Top, T == nullptr? nullptr : T);
+		InMaze->SetMazeAround(EMazeDirection::Left, L);
+		InMaze->SetMazeAround(EMazeDirection::Bottom, B);
+		InMaze->SetMazeAround(EMazeDirection::Right, R);
+		InMaze->SetMazeAround(EMazeDirection::Top, T);
 	};
 
-	const auto& DataBottom = ActorBottom->GetMazeData();
-	const auto& DataTop = ActorTop->GetMazeData();
-	const auto& DataFront = ActorFront->GetMazeData();
-	const auto& DataBack = ActorBack->GetMazeData();
-	const auto& DataLeft = ActorLeft->GetMazeData();
-	const auto& DataRight = ActorRight->GetMazeData();
+	BindSigle(ActorTop, ActorLeft, ActorBack, ActorRight, ActorFront);
+	BindSigle(ActorBottom, ActorLeft, ActorBack, ActorRight, ActorFront);
+	BindSigle(ActorFront, ActorLeft, ActorTop, ActorRight, ActorBottom);
+	BindSigle(ActorBack, ActorLeft, ActorTop, ActorRight, ActorBottom);
+	BindSigle(ActorLeft, ActorTop, ActorBack, ActorBottom, ActorFront);
+	BindSigle(ActorRight, ActorTop, ActorBack, ActorBottom, ActorFront);
 
-	BindSigle(DataTop, DataLeft, DataBack, DataRight, DataFront);
-	BindSigle(DataBottom, DataLeft, DataBack, DataRight, DataFront);
-	BindSigle(DataFront, DataLeft, DataTop, DataRight, DataBottom);
-	BindSigle(DataBack, DataLeft, DataTop, DataRight, DataBottom);
-	BindSigle(DataLeft, DataTop, DataBack, DataBottom, DataFront);
-	BindSigle(DataRight, DataTop, DataBack, DataBottom, DataFront);
-
-	DataFront->GenerateEdgeEntry();
+	ActorFront->BindEntries();
+	ActorBack->BindEntries();
+	ActorTop->BindEntries();
+	ActorBottom->BindEntries();
+	ActorLeft->BindEntries();
+	ActorRight->BindEntries();
+	
+	ActorFront->GenerateEntry(true);
 }
 
 void ACubeMazeActor::GenerateCubeMaze(bool bResetRandomSeed)

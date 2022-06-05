@@ -43,3 +43,20 @@ void APortalActor::Tick(float DeltaTime)
 
 }
 
+void APortalActor::SetBindPortal(APortalActor* Portal1, APortalActor* Portal2)
+{
+	if (Portal1) Portal1->PortalBind = Portal2;
+	if (Portal2) Portal2->PortalBind = Portal1;
+}
+
+void APortalActor::DrawPortalConnectLine(FColor Color)const
+{
+	if (PortalBind == nullptr) return;
+
+	const FVector FromPos = GetActorLocation();
+	const FVector ToPos = PortalBind->GetActorLocation();
+
+	// DrawDebugLine(GetWorld(), FromPos, ToPos, Color, true, -1, 0, 10);
+	DrawDebugLine(GetWorld(), FromPos, ToPos, Color, true, -1, 2, 10);
+}
+
