@@ -31,13 +31,13 @@ protected:
 	TObjectPtr<UInstancedStaticMeshComponent> MazeEdge;
 
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UBoxComponent> EntryLeft;
+	TObjectPtr<UChildActorComponent> EntryLeft;
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UBoxComponent> EntryRight;
+	TObjectPtr<UChildActorComponent> EntryRight;
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UBoxComponent> EntryTop;
+	TObjectPtr<UChildActorComponent> EntryTop;
 	UPROPERTY(Category=Maze, EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UBoxComponent> EntryBottom;
+	TObjectPtr<UChildActorComponent> EntryBottom;
 
 	// 保存每块墙的实例的index
 	// -2: 需要创建墙，但是还没创建
@@ -45,6 +45,8 @@ protected:
 	// 0+: 已经创建完成，值为对应墙的实例的index
 	UPROPERTY(Category=Maze, BlueprintReadOnly)
 	TObjectPtr<class UMazeDataGenerator> MazeData;
+
+	TObjectPtr<class APortalActor> EntryActors[4];
 
 	// 这些是默认尺寸
 	const float MeshSize = 100.f;
@@ -66,12 +68,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION(Category=Maze, BlueprintCallable)
 	void CheckMazeData();
 
-	void InitializeEntryBox(const TObjectPtr<UBoxComponent>& EntryBox)const;
+	bool CheckChildActor();
 
 	UFUNCTION()
-	void OnEntryBoxBeginOvelap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	void OnEntryBeginOvelap(APortalActor* OverlappedActor, AActor* OtherActor);
 	
 public:	
 	// Called every frame

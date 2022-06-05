@@ -5,6 +5,7 @@
 
 #include "MazeCharacter.h"
 #include "MazeDataGenerator.h"
+#include "PortalActor.h"
 #include "Components/BoxComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -23,6 +24,7 @@ AMazeActor::AMazeActor()
 	MazeRow = 12;
 	MazeCol = 12;
 	bNeedEdge = true;
+	CheckMazeData();
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 
@@ -35,14 +37,17 @@ AMazeActor::AMazeActor()
 	MazeEdge = CreateDefaultSubobject<UInstancedStaticMeshComponent>("Edge");
 	MazeEdge->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
-	EntryLeft = CreateDefaultSubobject<UBoxComponent>("EntryLeft");
-	InitializeEntryBox(EntryLeft);
-	EntryRight = CreateDefaultSubobject<UBoxComponent>("EntryRight");
-	InitializeEntryBox(EntryRight);
-	EntryTop = CreateDefaultSubobject<UBoxComponent>("EntryTop");
-	InitializeEntryBox(EntryTop);
-	EntryBottom = CreateDefaultSubobject<UBoxComponent>("EntryBottom");
-	InitializeEntryBox(EntryBottom);
+	EntryLeft = CreateDefaultSubobject<UChildActorComponent>("EntryLeft");
+	EntryLeft->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	
+	EntryRight = CreateDefaultSubobject<UChildActorComponent>("EntryRight");
+	EntryRight->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	
+	EntryTop = CreateDefaultSubobject<UChildActorComponent>("EntryTop");
+	EntryTop->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	
+	EntryBottom = CreateDefaultSubobject<UChildActorComponent>("EntryBottom");
+	EntryBottom->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void AMazeActor::FinishDestroy()
@@ -56,16 +61,17 @@ void AMazeActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!CheckChildActor()) return;
 	// 在构造函数生成的话可能会因为蓝图编译而失效，所以放到这里绑定。
-	EntryLeft->OnComponentBeginOverlap.AddDynamic(this, &AMazeActor::OnEntryBoxBeginOvelap);
-	EntryRight->OnComponentBeginOverlap.AddDynamic(this, &AMazeActor::OnEntryBoxBeginOvelap);
-	EntryBottom->OnComponentBeginOverlap.AddDynamic(this, &AMazeActor::OnEntryBoxBeginOvelap);
-	EntryTop->OnComponentBeginOverlap.AddDynamic(this, &AMazeActor::OnEntryBoxBeginOvelap);
+	for (const auto& Entry : EntryActors)
+	{
+		Entry->OnPortalActorBeginOverlap.AddDynamic(this, &AMazeActor::OnEntryBeginOvelap);
+	}
 }
 
 void AMazeActor::GenerateMaze(bool bResetRandomSeed)
 {
-	CheckMazeData();
+	// CheckMazeData();
 	MazeData->Generate(bResetRandomSeed);
 
 	// 这里先不加上边界的尺寸
@@ -135,7 +141,7 @@ void AMazeActor::UpdateMazeEdge(bool bNEdge)
 	FVector2D MazeSpaceSize = GetMazeRawSpaceSize();
 	const FVector2D CenterOffset = MazeSpaceSize / 2.f;
 
-	auto UpdateMazeEdge = [&](int32 InEntry, const FVector& InStartLoc, int32 InDir, const TObjectPtr<UBoxComponent> InBox)
+	auto UpdateMazeEdge = [&](int32 InEntry, const FVector& InStartLoc, int32 InDir, const TObjectPtr<USceneComponent> InBox)
 	{
 		const int32 SideLength = InDir == 1 ? MazeRow : MazeCol;  // 也可以把MazeRow和MazeCol做成FIntVector2D
 		FVector CurScale(EdgeScale);
@@ -216,17 +222,21 @@ void AMazeActor::CheckMazeData()
 	}
 }
 
-void AMazeActor::InitializeEntryBox(const TObjectPtr<UBoxComponent>& EntryBox)const
+bool AMazeActor::CheckChildActor()
 {
-	EntryBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	EntryBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	EntryBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	EntryBox->SetBoxExtent(FVector(MeshSize, MeshSize, MeshSize / 2.f));
-	EntryBox->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	EntryActors[UMazeDataGenerator::Left] = Cast<APortalActor>(EntryLeft->GetChildActor());
+	EntryActors[UMazeDataGenerator::Bottom] = Cast<APortalActor>(EntryBottom->GetChildActor());
+	EntryActors[UMazeDataGenerator::Right] = Cast<APortalActor>(EntryRight->GetChildActor());
+	EntryActors[UMazeDataGenerator::Top] = Cast<APortalActor>(EntryTop->GetChildActor());
+
+	for (const auto& Entry : EntryActors)
+	{
+		if (Entry == nullptr) return false;
+	}
+	return true;
 }
 
-void AMazeActor::OnEntryBoxBeginOvelap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AMazeActor::OnEntryBeginOvelap(APortalActor* OverlappedActor, AActor* OtherActor)
 {
 	const FVector LeftRotAxis(0.f, 1.f, 0.f);
 	const FVector RightRotAxis(0.f, -1.f, 0.f);
@@ -236,27 +246,27 @@ void AMazeActor::OnEntryBoxBeginOvelap(UPrimitiveComponent* OverlappedComponent,
 	float Duration = 10;
 	
 	FVector RotAxis;
-	if (OverlappedComponent == EntryLeft)
-	{
-		UKismetSystemLibrary::PrintString(GetWorld(), FString("Left!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-		if (MazeData->GetMazeAround(UMazeDataGenerator::Left) == nullptr) return;
-		RotAxis = LeftRotAxis;
-	} else if (OverlappedComponent == EntryRight)
-	{
-		UKismetSystemLibrary::PrintString(GetWorld(), FString("Right!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-		if (MazeData->GetMazeAround(UMazeDataGenerator::Right) == nullptr) return;
-		RotAxis = RightRotAxis;
-	} else if (OverlappedComponent == EntryBottom)
-	{
-		UKismetSystemLibrary::PrintString(GetWorld(), FString("Bottom!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-		if (MazeData->GetMazeAround(UMazeDataGenerator::Bottom) == nullptr) return;
-		RotAxis = BottomRotAxis;
-	} else if (OverlappedComponent == EntryTop)
-	{
-		UKismetSystemLibrary::PrintString(GetWorld(), FString("Top!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
-		if (MazeData->GetMazeAround(UMazeDataGenerator::Top) == nullptr) return;
-		RotAxis = TopRotAxis;
-	}
+	// if (OverlappedComponent == EntryLeft)
+	// {
+	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Left!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
+	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Left) == nullptr) return;
+	// 	RotAxis = LeftRotAxis;
+	// } else if (OverlappedComponent == EntryRight)
+	// {
+	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Right!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
+	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Right) == nullptr) return;
+	// 	RotAxis = RightRotAxis;
+	// } else if (OverlappedComponent == EntryBottom)
+	// {
+	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Bottom!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
+	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Bottom) == nullptr) return;
+	// 	RotAxis = BottomRotAxis;
+	// } else if (OverlappedComponent == EntryTop)
+	// {
+	// 	UKismetSystemLibrary::PrintString(GetWorld(), FString("Top!!!"), true, true, FLinearColor(0, 0.66, 1), Duration);
+	// 	if (MazeData->GetMazeAround(UMazeDataGenerator::Top) == nullptr) return;
+	// 	RotAxis = TopRotAxis;
+	// }
 
 	const FQuat ActorQuat = GetActorQuat();
 	RotAxis = ActorQuat.RotateVector(RotAxis);
@@ -265,16 +275,13 @@ void AMazeActor::OnEntryBoxBeginOvelap(UPrimitiveComponent* OverlappedComponent,
 	const FQuat Rot(RotAxis, FMath::DegreesToRadians(90));
 	// UKismetSystemLibrary::PrintString(GetWorld(), Rot.GetAxisZ().ToString(), true, true, FLinearColor(0, 0.66, 1), Duration);
 
-	ActorQuat.Rotator();
-	RotAxis.ToString();
-	Rot.ToString();
 	if (const auto ParentActor = GetParentActor())
 	{
 		if (auto Character = Cast<AMazeCharacter>(OtherActor))
 		{
 			// Character->SetActorEnableCollision(false);  // 防止移动时产生碰撞
-			Character->SetActorLocation(FVector(0.f, 0.f, 1000.f));
-			ParentActor->AddActorLocalRotation(Rot);
+			// Character->SetActorLocation(FVector(0.f, 0.f, 1000.f));
+			// ParentActor->AddActorLocalRotation(Rot);
 			// Character->SetActorEnableCollision(true);
 		}
 	}
@@ -292,6 +299,6 @@ void AMazeActor::SetSizeAndRandomSeed(int32 MCol, int32 MRow, int32 RSeed)
 	RandomSeed = RSeed;
 	MazeRow = MRow;
 	MazeCol = MCol;
-	CheckMazeData();
+	// CheckMazeData();
 	MazeData->ResetMaze(MazeRow, MazeCol, RandomSeed);
 }
