@@ -70,10 +70,10 @@ void ACubeMazeActor::BindMazeAround()const
 	{
 		if (InMaze == nullptr) return;
 		InMaze->ResetEdgeEntry();
-		InMaze->SetMazeAround(UMazeDataGenerator::Left, L == nullptr? nullptr : L);
-		InMaze->SetMazeAround(UMazeDataGenerator::Bottom, B == nullptr? nullptr : B);
-		InMaze->SetMazeAround(UMazeDataGenerator::Right, R == nullptr? nullptr : R);
-		InMaze->SetMazeAround(UMazeDataGenerator::Top, T == nullptr? nullptr : T);
+		InMaze->SetMazeAround(EMazeDirection::Left, L == nullptr? nullptr : L);
+		InMaze->SetMazeAround(EMazeDirection::Bottom, B == nullptr? nullptr : B);
+		InMaze->SetMazeAround(EMazeDirection::Right, R == nullptr? nullptr : R);
+		InMaze->SetMazeAround(EMazeDirection::Top, T == nullptr? nullptr : T);
 	};
 
 	const auto& DataBottom = ActorBottom->GetMazeData();

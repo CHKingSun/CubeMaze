@@ -25,7 +25,7 @@ void UMazeDataGenerator::ResetMaze(int32 Row, int32 Col, int32 RSeed)
 	ColSize = MazeCol * 2 -1;
 	RandomStream.Initialize(RSeed);
 
-	for (int i = 0; i < Direction::DirectionSize; ++i)
+	for (int i = 0; i < EMazeDirection::DirectionSize; ++i)
 	{
 		EdgeEntries[i] = -1;
 		AroundMazes[i] = nullptr;
@@ -39,13 +39,13 @@ void UMazeDataGenerator::ResetMaze(int32 Row, int32 Col, int32 RSeed)
 		{
 			if (x % 2 == 1 && y % 2 == 1)  // Junction
 			{
-				MazeData.Emplace(FMazeDataStruct::Junction, x, y, -2);
+				MazeData.Emplace(EMazePlaceType::Junction, x, y, -2);
 			} else if (x % 2 == 1 || y % 2 == 1) // Edge
 			{
-				MazeData.Emplace(FMazeDataStruct::Wall, x, y, -2);
+				MazeData.Emplace(EMazePlaceType::Wall, x, y, -2);
 			}else
 			{
-				MazeData.Emplace(FMazeDataStruct::Space, x, y, -2);
+				MazeData.Emplace(EMazePlaceType::Space, x, y, -2);
 			}
 		}
 	}
@@ -55,7 +55,7 @@ int32 UMazeDataGenerator::GetEdgeEntryByMazeArund(const TObjectPtr<UMazeDataGene
 {
 	if (AroundMaze == nullptr) return -1;
 
-	for (int32 i = 0; i < DirectionSize; ++i)
+	for (int32 i = 0; i < EMazeDirection::DirectionSize; ++i)
 	{
 		if (AroundMazes[i] == AroundMaze)
 		{
@@ -83,14 +83,14 @@ void UMazeDataGenerator::GenerateEdgeEntry()
 	}
 	if (bFlag) return;
 	
-	for (int i = 0; i < Direction::DirectionSize; ++i)
+	for (int i = 0; i < EMazeDirection::DirectionSize; ++i)
 	{
 		if (EdgeEntries[i] != -1) continue;
 		
 		int32 Index = AroundMazes[i] == nullptr ? -1 : AroundMazes[i]->GetEdgeEntryByMazeArund(this);
 		if (Index == -1)
 		{
-			if (i == Left || i == Right) Index = (RandomStream.RandHelper(MazeRow) + RandomStream.RandHelper(MazeRow)) / 2;
+			if (i == EMazeDirection::Left || i == EMazeDirection::Right) Index = (RandomStream.RandHelper(MazeRow) + RandomStream.RandHelper(MazeRow)) / 2;
 			else Index = (RandomStream.RandHelper(MazeCol) + RandomStream.RandHelper(MazeCol)) / 2;
 		}
 		EdgeEntries[i] = Index;
@@ -104,13 +104,13 @@ void UMazeDataGenerator::GenerateEdgeEntry()
 
 void UMazeDataGenerator::ResetEdgeEntry()
 {
-	for (int i = 0; i < Direction::DirectionSize; ++i)
+	for (int i = 0; i < EMazeDirection::DirectionSize; ++i)
 	{
 		EdgeEntries[i] = -1;
 	}
 }
 
-void UMazeDataGenerator::PrimRecursive(TSet<int32>& GridSet, int32 CurX, int32 CurY, Direction FromDir)
+void UMazeDataGenerator::PrimRecursive(TSet<int32>& GridSet, int32 CurX, int32 CurY, EMazeDirection::Direction FromDir)
 {
 	if (CurX < 0 || MazeCol <= CurX || CurY < 0 || MazeRow <= CurY) return;
 	if (GridSet.Num() == MazeRow * MazeCol || GridSet.Contains(CurX + CurY * MazeCol)) return;
@@ -119,25 +119,25 @@ void UMazeDataGenerator::PrimRecursive(TSet<int32>& GridSet, int32 CurX, int32 C
 
 	switch (FromDir)
 	{
-	case Left:
+	case EMazeDirection::Left:
 		MazeData[CurX * 2 - 1 + (CurY * 2) * ColSize].MeshIndex = -1;
 		break;
-	case Bottom:
+	case EMazeDirection::Bottom:
 		MazeData[CurX * 2 + (CurY * 2 - 1) * ColSize].MeshIndex = -1;
 		break;
-	case Right:
+	case EMazeDirection::Right:
 		MazeData[CurX * 2 + 1 + (CurY * 2) * ColSize].MeshIndex = -1;
 		break;
-	case Top:
+	case EMazeDirection::Top:
 		MazeData[CurX * 2 + (CurY * 2 + 1) * ColSize].MeshIndex = -1;
 		break;
 	default: ;
 	}
 
-	Direction Dirs[4] = { Left, Right, Top, Bottom, };
-	for (int i = 0; i < DirectionSize; ++i)
+	EMazeDirection::Direction Dirs[4] = { EMazeDirection::Left, EMazeDirection::Right, EMazeDirection::Top, EMazeDirection::Bottom, };
+	for (int i = 0; i < EMazeDirection::DirectionSize; ++i)
 	{
-		const int32 NewIndex = RandomStream.RandHelper(DirectionSize);
+		const int32 NewIndex = RandomStream.RandHelper(EMazeDirection::DirectionSize);
 		std::swap(Dirs[i], Dirs[NewIndex]);
 	}
 
@@ -145,17 +145,17 @@ void UMazeDataGenerator::PrimRecursive(TSet<int32>& GridSet, int32 CurX, int32 C
 	{
 		switch (Dir)
 		{
-		case Left:
-			PrimRecursive(GridSet, CurX - 1, CurY, Right);
+		case EMazeDirection::Left:
+			PrimRecursive(GridSet, CurX - 1, CurY, EMazeDirection::Right);
 			break;
-		case Bottom:
-			PrimRecursive(GridSet, CurX, CurY - 1, Top);
+		case EMazeDirection::Bottom:
+			PrimRecursive(GridSet, CurX, CurY - 1, EMazeDirection::Top);
 			break;
-		case Right:
-			PrimRecursive(GridSet, CurX + 1, CurY, Left);
+		case EMazeDirection::Right:
+			PrimRecursive(GridSet, CurX + 1, CurY, EMazeDirection::Left);
 			break;
-		case Top:
-			PrimRecursive(GridSet, CurX, CurY + 1, Bottom);
+		case EMazeDirection::Top:
+			PrimRecursive(GridSet, CurX, CurY + 1, EMazeDirection::Bottom);
 			break;
 		default: ;
 		}

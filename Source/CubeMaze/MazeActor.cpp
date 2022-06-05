@@ -93,8 +93,8 @@ void AMazeActor::GenerateMaze(bool bResetRandomSeed)
 	{
 		switch (SpaceData.DataType)
 		{
-		case FMazeDataStruct::Space: break;
-		case FMazeDataStruct::Wall:
+		case EMazePlaceType::Space: break;
+		case EMazePlaceType::Wall:
 			if (SpaceData.MeshIndex == -2)
 			{
 				if (SpaceData.X % 2 == 0)
@@ -113,7 +113,7 @@ void AMazeActor::GenerateMaze(bool bResetRandomSeed)
 				SpaceData.MeshIndex = MazeWall->AddInstance(Trans);
 			}
 			break;
-		case FMazeDataStruct::Junction:
+		case EMazePlaceType::Junction:
 			if (SpaceData.MeshIndex == -2)
 			{
 				const auto OffsetX = SpaceData.X / 2 * (SpaceSize.X + WallSize.X) + SpaceSize.X;
@@ -178,13 +178,13 @@ void AMazeActor::UpdateMazeEdge(bool bNEdge)
 		}
 	};
 	
-	int32 Entry = MazeData->GetEdgeEntry(UMazeDataGenerator::Left);
+	int32 Entry = MazeData->GetEdgeEntry(EMazeDirection::Left);
 	UpdateMazeEdge(Entry, FVector(-CenterOffset.X - EdgeSize.X, -CenterOffset.Y, 0.f), 1, EntryLeft);
-	Entry = MazeData->GetEdgeEntry(UMazeDataGenerator::Right);
+	Entry = MazeData->GetEdgeEntry(EMazeDirection::Right);
 	UpdateMazeEdge(Entry, FVector(CenterOffset.X, -CenterOffset.Y, 0.f), 1, EntryRight);
-	Entry = MazeData->GetEdgeEntry(UMazeDataGenerator::Bottom);
+	Entry = MazeData->GetEdgeEntry(EMazeDirection::Bottom);
 	UpdateMazeEdge(Entry, FVector(-CenterOffset.X, -CenterOffset.Y - EdgeSize.Y, 0.f), 0, EntryBottom);
-	Entry = MazeData->GetEdgeEntry(UMazeDataGenerator::Top);
+	Entry = MazeData->GetEdgeEntry(EMazeDirection::Top);
 	UpdateMazeEdge(Entry, FVector(-CenterOffset.X, CenterOffset.Y, 0.f), 0, EntryTop);
 
 	// Corner
@@ -224,10 +224,10 @@ void AMazeActor::CheckMazeData()
 
 bool AMazeActor::CheckChildActor()
 {
-	EntryActors[UMazeDataGenerator::Left] = Cast<APortalActor>(EntryLeft->GetChildActor());
-	EntryActors[UMazeDataGenerator::Bottom] = Cast<APortalActor>(EntryBottom->GetChildActor());
-	EntryActors[UMazeDataGenerator::Right] = Cast<APortalActor>(EntryRight->GetChildActor());
-	EntryActors[UMazeDataGenerator::Top] = Cast<APortalActor>(EntryTop->GetChildActor());
+	EntryActors[EMazeDirection::Left] = Cast<APortalActor>(EntryLeft->GetChildActor());
+	EntryActors[EMazeDirection::Bottom] = Cast<APortalActor>(EntryBottom->GetChildActor());
+	EntryActors[EMazeDirection::Right] = Cast<APortalActor>(EntryRight->GetChildActor());
+	EntryActors[EMazeDirection::Top] = Cast<APortalActor>(EntryTop->GetChildActor());
 
 	for (const auto& Entry : EntryActors)
 	{
