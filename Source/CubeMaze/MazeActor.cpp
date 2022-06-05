@@ -165,6 +165,7 @@ void AMazeActor::UpdateMazeEdge(bool bNEdge)
 
 			FVector BoxOffset(0.f, 0.f, MeshSize);
 			BoxOffset[InDir] = MeshSize;
+			BoxOffset[1 - InDir] = MeshSize / 2.f;
 			InBox->SetRelativeLocation(Trans.GetLocation() + BoxOffset);
 			InBox->SetActive(true);
 			
@@ -216,6 +217,8 @@ void AMazeActor::BindEntries()
 
 void AMazeActor::GenerateEntry(bool bRecursive)
 {
+	if (!CheckChildActor()) return;
+	
 	bool bNeedUpdate = false;
 	for (const auto& Dir : EMazeDirection::Directions)
 	{
@@ -292,6 +295,7 @@ bool AMazeActor::CheckChildActor()
 		else
 		{
 			Entry->SetEntryDirection(Dir);
+			Entry->SetActorRelativeRotation(FRotator(0.f, 90 * Dir, 0.f));
 		}
 	}
 	return bRet;
@@ -326,7 +330,7 @@ void AMazeActor::OnEntryBeginOvelap(APortalActor* OverlappedActor, AActor* Other
 	if (AroundMaze == nullptr) return;
 
 	FVector UpVector = FVector::UpVector;
-	const FVector Scale = AroundMaze->GetActorScale3D();  // 镜像的是ChildActorComponent
+	const FVector Scale = AroundMaze->GetActorRelativeScale3D();
 	UpVector *= FVector(FMath::Sign(Scale.X), FMath::Sign(Scale.Y), FMath::Sign(Scale.Z));  // 处理镜像问题
 	UpVector = AroundMaze->GetActorQuat().RotateVector(UpVector);  // 找到要旋转的Maze的Z轴
 
@@ -351,9 +355,11 @@ void AMazeActor::OnEntryBeginOvelap(APortalActor* OverlappedActor, AActor* Other
 			FVector Axis = UpVector ^ FVector::UpVector;  // 求出轴向
 			Axis.Normalize();
 			const FQuat Rot = FQuat(Axis, FMath::DegreesToRadians(90));
-			// Character->AddActorLocalOffset(FVector(0.f, 0.f, 1000.f));  // 防止移动时产生碰撞
+			Character->AddActorLocalOffset(FVector(0.f, 0.f, 1000.f));  // TODO 如何解决移动时碰撞问题？
 			ParentActor->AddActorWorldRotation(Rot);
-			Character->SetActorLocation(FVector(0.f, 0.f, 1000.f));
+			const auto BindEntry = Entry->GetBindPortal();
+			const FVector ToPos = BindEntry == nullptr ? FVector(0.f, 0.f, 1000.f) : BindEntry->GetActorLocation() + BindEntry->GetActorForwardVector() * 100.f;
+			Character->SetActorLocation(ToPos);
 
 			UKismetSystemLibrary::PrintString(GetWorld(), AroundMaze->GetActorTransform().GetScaledAxis(EAxis::Z).ToString(), true, true, FLinearColor(0, 0.66, 1), 2);
 		}

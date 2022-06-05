@@ -140,12 +140,12 @@ void ACubeMazeActor::GenerateCubeMaze(bool bResetRandomSeed)
 	const FVector SpaceSize(ActorBottom->GetMazeSpaceSize(), ActorFront->GetMazeSpaceSize().Y);
 	const auto CenterOffset = SpaceSize / 2.f;
 	
-	MazeTop->SetRelativeTransform(FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, CenterOffset.Z), FVector::OneVector));
-	MazeBottom->SetRelativeTransform(FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -CenterOffset.Z), FVector(1.f, 1.f, -1.f)));
-	MazeFront->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f), FVector(0.f, CenterOffset.Y, 0.f), FVector::OneVector));
-	MazeBack->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f), FVector(0.f, -CenterOffset.Y, 0.f), FVector(1.f, 1.f, -1.f)));
-	MazeLeft->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f), FVector(-CenterOffset.X, 0.f, 0.f), FVector(1.f, 1.f, -1.f)));
-	MazeRight->SetRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f), FVector(CenterOffset.X, 0.f, 0.f), FVector::OneVector));
+	ActorTop->SetActorRelativeTransform(FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, CenterOffset.Z), FVector::OneVector));
+	ActorBottom->SetActorRelativeTransform(FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -CenterOffset.Z), FVector(1.f, 1.f, -1.f)));
+	ActorFront->SetActorRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f), FVector(0.f, CenterOffset.Y, 0.f), FVector::OneVector));
+	ActorBack->SetActorRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::XAxisVector, -90.f), FVector(0.f, -CenterOffset.Y, 0.f), FVector(1.f, 1.f, -1.f)));
+	ActorLeft->SetActorRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f), FVector(-CenterOffset.X, 0.f, 0.f), FVector(1.f, 1.f, -1.f)));
+	ActorRight->SetActorRelativeTransform(FTransform(UKismetMathLibrary::RotatorFromAxisAndAngle(FVector::YAxisVector, 90.f), FVector(CenterOffset.X, 0.f, 0.f), FVector::OneVector));
 	
 	//Edge
 	constexpr float MeshSize = 100.f;

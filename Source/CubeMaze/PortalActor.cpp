@@ -17,7 +17,7 @@ APortalActor::APortalActor()
 	Box->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	Box->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	Box->SetBoxExtent(FVector(100.f, 100.f, 50.f));  // TODO need change later
+	Box->SetBoxExtent(FVector(50.f, 100.f, 50.f));
 	Box->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
 }

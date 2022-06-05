@@ -107,6 +107,7 @@ public:
 	
 	void BindEntries();
 
+	UFUNCTION(Category=Maze, BlueprintCallable)
 	void GenerateEntry(bool bRecursive = false);
 
 	TObjectPtr<AEntryPortalActor> GetEntryToMazeAround(const TObjectPtr<AMazeActor>& Maze)const;

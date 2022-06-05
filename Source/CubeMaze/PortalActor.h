@@ -48,4 +48,6 @@ public:
 	UFUNCTION(Category=Portal, BlueprintCallable)
 	static void SetBindPortal(APortalActor* Portal1, APortalActor* Portal2);
 
+	const TObjectPtr<APortalActor>& GetBindPortal()const { return PortalBind; }
+
 };
