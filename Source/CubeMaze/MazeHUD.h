@@ -52,7 +52,7 @@ public:
 	void BindWidgetClass(const FString& WidgetName, TSubclassOf<UMazeWidgetBase> WidgetClass);
 
 	UFUNCTION(Category=MazeWidget, BlueprintCallable)
-	UMazeWidgetBase* GetWidget(const FString& WidgetName);
+	UMazeWidgetBase* GetWidget(const FString& WidgetName, bool bPushWidget=false);
 
 	UFUNCTION(Category=MazeWidget, BlueprintCallable)
 	void RemoveWidget(const FString& WidgetName);

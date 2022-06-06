@@ -17,7 +17,7 @@ void AMazeHUD::BindWidgetClass(const FString& WidgetName, TSubclassOf<UMazeWidge
 	WidgetClass = InWidgetClass;
 }
 
-UMazeWidgetBase* AMazeHUD::GetWidget(const FString& WidgetName)
+UMazeWidgetBase* AMazeHUD::GetWidget(const FString& WidgetName, bool bPushWidget)
 {
 	const auto WidStruct = AllWidgets.Find(WidgetName);
 
@@ -29,6 +29,8 @@ UMazeWidgetBase* AMazeHUD::GetWidget(const FString& WidgetName)
 		WidStruct->Widget->AddToViewport();  // 默认添加到屏幕
 	}
 
+	if (bPushWidget) PushWidget(WidStruct->Widget);
+
 	return WidStruct->Widget;
 }
 
@@ -36,9 +38,10 @@ void AMazeHUD::RemoveWidget(const FString& WidgetName)
 {
 	if (const auto WidStruct = AllWidgets.Find(WidgetName))
 	{
-		if (WidStruct->Widget)
+		if (const auto& Wid = WidStruct->Widget)
 		{
-			WidStruct->Widget->RemoveFromParent();
+			if (Wid->GetWidgetState() == EWidgetState::Push) PopWidget(Wid);
+			Wid->RemoveFromParent();
 		}
 		WidStruct->Widget = nullptr;
 	}
@@ -46,7 +49,8 @@ void AMazeHUD::RemoveWidget(const FString& WidgetName)
 
 void AMazeHUD::PushWidget(UMazeWidgetBase* Widget)
 {
-	if (Widget == nullptr) return;
+	// 目前Push过的Widget就不在Push
+	if (Widget == nullptr || Widget->GetWidgetState() == EWidgetState::Push) return;
 
 	Widget->OnEnterWidget();
 
@@ -68,10 +72,8 @@ void AMazeHUD::PushWidget(UMazeWidgetBase* Widget)
 
 void AMazeHUD::PopWidget(UMazeWidgetBase* Widget)
 {
-	if (Widget == nullptr) return;
-
-	Widget->OnExitWidget();
-
+	if (Widget == nullptr || Widget->GetWidgetState() == EWidgetState::Pop) return;
+	
 	if (Widget->IsWigetNeedPause())
 	{
 		PauseWidgetCount -= 1;
@@ -88,4 +90,6 @@ void AMazeHUD::PopWidget(UMazeWidgetBase* Widget)
 			Controller->SetInputMode(FInputModeGameOnly());
 		}
 	}
+	
+	Widget->OnExitWidget();
 }

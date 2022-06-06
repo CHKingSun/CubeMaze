@@ -45,10 +45,11 @@ public:
 	UFUNCTION(Category=MazeWidget, BlueprintGetter)
 	EWidgetState GetWidgetState()const { return WidgetState; }
 
-	// 或许还需要应该Push/Pop的状态数据，但目前这样是OK的
-	UFUNCTION(Category=MazeWidget, BlueprintCallable)
-	virtual void OnEnterWidget() { WidgetState = EWidgetState::Push; SetVisibility(ESlateVisibility::Visible); }
+	UFUNCTION(Category=MazeWidget, BlueprintNativeEvent)
+	void OnEnterWidget();
+	virtual void OnEnterWidget_Implementation() { WidgetState = EWidgetState::Push; SetVisibility(ESlateVisibility::Visible); }
 	
-	UFUNCTION(Category=MazeWidget, BlueprintCallable)
-	virtual void OnExitWidget() { SetVisibility(ESlateVisibility::Hidden); WidgetState = EWidgetState::Pop; }
+	UFUNCTION(Category=MazeWidget, BlueprintNativeEvent)
+	void OnExitWidget();
+	virtual void OnExitWidget_Implementation()  { SetVisibility(ESlateVisibility::Hidden); WidgetState = EWidgetState::Pop; }
 };
